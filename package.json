@@ -1,0 +1,17 @@
+{
+  "name": "twelve-issues",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "dev": "wrangler pages dev --port 8788",
+    "db:local": "wrangler d1 execute twelve-issues --local --file schema.sql"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "wrangler": "^4.156.2"
+  },
+  "private": true,
+  "type": "module"
+}

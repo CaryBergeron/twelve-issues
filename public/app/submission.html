@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project | Twelve Issues</title>
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,550;12..96,650;12..96,800&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<header class="top"><div class="wrap top-in">
+  <a class="brand" href="/"><span class="brand-mark">12</span>Twelve Issues</a>
+  <nav class="nav" id="nav"></nav>
+</div></header>
+<main class="page"><div class="wrap">
+  <div class="page-head">
+    <div><p class="small" style="margin:0 0 .4rem"><a href="/app/">Your projects</a></p><h1 id="title">Loading...</h1></div>
+    <span class="pill" id="status"></span>
+  </div>
+  <div id="msg" hidden></div>
+
+  <section id="pay-panel" class="panel" hidden>
+    <h2>One step left</h2>
+    <p class="muted">Your project is saved. Complete checkout and we will start writing right away.</p>
+    <button class="btn btn-red btn-lg" id="pay">Pay and write my issues</button>
+  </section>
+
+  <section id="work-panel" class="panel" hidden>
+    <h2 id="work-title">Writing your issues</h2>
+    <p class="muted" id="work-text">This usually takes about 10 minutes. Keep this page open; we will pick up where we left off if you leave.</p>
+    <div class="progress working" id="bar"><div></div></div>
+    <p class="small muted" id="work-step"></p>
+    <ol class="small muted" id="plan" style="columns:2;margin-top:1rem"></ol>
+    <button class="btn" id="retry" hidden>Try again</button>
+  </section>
+
+  <section id="done-panel" hidden>
+    <div class="panel" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+      <div><strong>All 12 issues are ready.</strong> <span class="muted">Copy them one at a time or download them all.</span></div>
+      <div style="display:flex;gap:.5rem;flex-wrap:wrap">
+        <button class="btn btn-sm btn-ghost" id="dl-md">Download Markdown</button>
+        <button class="btn btn-sm btn-ghost" id="dl-html">Download email HTML</button>
+        <button class="btn btn-sm btn-ghost" id="dl-csv">Download spreadsheet</button>
+      </div>
+    </div>
+    <div class="viewer">
+      <nav class="issue-nav" id="issue-nav" aria-label="Issues"></nav>
+      <article class="panel" id="issue" style="margin:0"></article>
+    </div>
+    <div class="panel" style="margin-top:1.4rem" id="feedback">
+      <h3>How did we do?</h3>
+      <div class="stars" id="stars" role="radiogroup" aria-label="Rating"></div>
+      <div class="field" style="margin-top:.8rem"><label for="fb">What would make these better? <span class="hint">Optional, but it helps us a lot</span></label><textarea id="fb" maxlength="3000"></textarea></div>
+      <button class="btn btn-sm" id="fb-save">Send feedback</button> <span class="small muted" id="fb-ok"></span>
+    </div>
+  </section>
+</div></main>
+<script src="/assets/app.js"></script>
+<script>
+const id = new URLSearchParams(location.search).get('id');
+const params = new URLSearchParams(location.search);
+let sub = null, issues = [], current = 1, running = false, rating = 0;
+const STEP_TEXT = ['Reading your material and planning the year', 'Writing issues 1 to 4', 'Writing issues 5 to 8', 'Writing issues 9 to 12'];
+
+(async () => {
+  await TI.requireLogin();
+  if (!id) return (location.href = '/app/');
+  if (params.get('session_id')) await confirmPayment(params.get('session_id'));
+  if (params.get('canceled')) TI.showError(TI.$('#msg'), 'Checkout was canceled. Your project is saved, so you can pay whenever you are ready.');
+  await load();
+})();
+
+async function load() {
+  try {
+    const r = await TI.api('submissions/' + id);
+    sub = r.submission; issues = r.issues;
+    render();
+  } catch (err) { TI.showError(TI.$('#msg'), err.message); }
+}
+
+async function confirmPayment(sessionId) {
+  for (let i = 0; i < 6; i++) {
+    try { const r = await TI.api(`submissions/${id}/confirm`, { method: 'POST', body: { session_id: sessionId } }); if (r.paid) break; } catch {}
+    await new Promise(r => setTimeout(r, 1500));
+  }
+  history.replaceState(null, '', `/app/submission.html?id=${id}`);
+}
+
+function render() {
+  document.title = `${sub.title} | Twelve Issues`;
+  TI.$('#title').textContent = sub.title;
+  const st = TI.$('#status'); st.textContent = TI.STATUS[sub.status] || sub.status; st.className = `pill pill-${sub.status}`;
+  TI.$('#pay-panel').hidden = sub.status !== 'awaiting_payment';
+  TI.$('#work-panel').hidden = !['paid', 'generating', 'failed'].includes(sub.status);
+  TI.$('#done-panel').hidden = sub.status !== 'complete';
+  TI.$('#pay').textContent = `Pay ${TI.money(sub.price_cents)} and write my issues`;
+  if (sub.status === 'complete') return renderDone();
+  if (['paid', 'generating', 'failed'].includes(sub.status)) renderWork();
+}
+
+function renderWork() {
+  const pct = Math.max(4, (sub.progress / 4) * 100);
+  TI.$('#bar > div').style.width = pct + '%';
+  TI.$('#work-step').textContent = sub.status === 'failed' ? '' : `Step ${Math.min(sub.progress + 1, 4)} of 4: ${STEP_TEXT[Math.min(sub.progress, 3)]}...`;
+  TI.$('#plan').innerHTML = (sub.plan || []).map(p => `<li>${TI.esc(p.label)}: ${TI.esc(p.theme)}</li>`).join('');
+  const failed = sub.status === 'failed';
+  TI.$('#bar').classList.toggle('working', !failed);
+  TI.$('#retry').hidden = !failed;
+  TI.$('#work-title').textContent = failed ? 'We hit a snag' : 'Writing your issues';
+  TI.$('#work-text').textContent = failed ? (sub.error || 'Something went wrong.') + ' Your progress is saved, so trying again picks up where it stopped.' : 'This usually takes about 10 minutes. Keep this page open. If you leave, we will pick up where we left off when you come back.';
+  if (!failed) run();
+}
+
+async function run() {
+  if (running) return;
+  running = true;
+  try {
+    while (true) {
+      let r;
+      try { r = await TI.api(`submissions/${id}/generate`, { method: 'POST' }); }
+      catch (err) {
+        if (err.status === 502 || err.status === 503) { await load(); running = false; return; }
+        throw err;
+      }
+      if (r.busy) await new Promise(res => setTimeout(res, 5000));
+      const fresh = await TI.api('submissions/' + id);
+      sub = fresh.submission; issues = fresh.issues;
+      if (sub.status === 'complete' || sub.status === 'failed') { running = false; return render(); }
+      renderWorkBar();
+    }
+  } catch (err) { TI.showError(TI.$('#msg'), err.message); }
+  running = false;
+}
+function renderWorkBar() {
+  TI.$('#bar > div').style.width = Math.max(4, (sub.progress / 4) * 100) + '%';
+  TI.$('#work-step').textContent = `Step ${Math.min(sub.progress + 1, 4)} of 4: ${STEP_TEXT[Math.min(sub.progress, 3)]}...`;
+  TI.$('#plan').innerHTML = (sub.plan || []).map(p => `<li>${TI.esc(p.label)}: ${TI.esc(p.theme)}</li>`).join('');
+}
+
+TI.$('#retry').addEventListener('click', () => { sub.status = 'generating'; render(); });
+TI.$('#pay').addEventListener('click', async e => {
+  const btn = e.currentTarget; btn.disabled = true;
+  try { const r = await TI.api(`submissions/${id}/checkout`, { method: 'POST' }); if (r.url) location.href = r.url; else await load(); }
+  catch (err) { TI.showError(TI.$('#msg'), err.message); }
+  btn.disabled = false;
+});
+
+// ----- finished issues -----
+function renderDone() {
+  TI.$('#issue-nav').innerHTML = issues.map(i => `<button type="button" data-n="${i.number}"><b>${TI.esc(i.month_label || 'Issue ' + i.number)}</b>${TI.esc(i.subject)}</button>`).join('');
+  TI.$$('#issue-nav button').forEach(b => b.addEventListener('click', () => show(Number(b.dataset.n))));
+  show(current);
+  rating = sub.rating || 0; renderStars();
+  TI.$('#fb').value = sub.feedback || '';
+}
+
+function plain(i) {
+  return `Subject: ${i.subject}\nPreview: ${i.preview_text}\n\n${i.headline}\n\n${i.body}\n\n${i.cta}${sub.settings.cta_url ? ': ' + sub.settings.cta_url : ''}`;
+}
+
+function show(n) {
+  current = n;
+  const i = issues.find(x => x.number === n) || issues[0];
+  TI.$$('#issue-nav button').forEach(b => b.setAttribute('aria-current', String(Number(b.dataset.n) === i.number)));
+  const link = sub.settings.cta_url;
+  TI.$('#issue').innerHTML = `
+    <div class="issue-tools">
+      <button class="btn btn-sm" data-copy="all">Copy issue</button>
+      <button class="btn btn-sm btn-ghost" data-copy="subject">Copy subject line</button>
+      <button class="btn btn-sm btn-ghost" data-copy="html">Copy as email HTML</button>
+    </div>
+    <dl class="letter-meta" style="border:1px solid var(--rule);border-radius:8px;margin:0 0 1.2rem">
+      <div><dt>Issue</dt><dd>${i.number} of 12${i.month_label ? ', ' + TI.esc(i.month_label) : ''}</dd></div>
+      <div><dt>Subject</dt><dd>${TI.esc(i.subject)}</dd></div>
+      <div><dt>Preview</dt><dd>${TI.esc(i.preview_text)}</dd></div>
+    </dl>
+    <div class="prose"><h2>${TI.esc(i.headline)}</h2>${TI.md(i.body)}
+      <p>${link ? `<a class="cta-line" href="${TI.esc(link)}" target="_blank" rel="noopener">${TI.esc(i.cta)}</a>` : `<span class="cta-line">${TI.esc(i.cta)}</span>`}</p></div>
+    ${i.image_idea ? `<p class="small muted" style="margin-top:1.4rem"><strong>Image idea:</strong> ${TI.esc(i.image_idea)}</p>` : ''}`;
+  TI.$$('[data-copy]').forEach(b => b.addEventListener('click', () => {
+    const k = b.dataset.copy;
+    TI.copy(k === 'subject' ? i.subject : k === 'html' ? emailHtml(i) : plain(i), b);
+  }));
+}
+
+function emailHtml(i) {
+  const link = sub.settings.cta_url;
+  const body = TI.md(i.body)
+    .replace(/<p>/g, '<p style="margin:0 0 16px;font-size:17px;line-height:1.6;color:#1b1f3b">')
+    .replace(/<h(\d)>/g, '<h$1 style="font-size:20px;margin:22px 0 10px;color:#1b1f3b">')
+    .replace(/<(ul|ol)>/g, '<$1 style="margin:0 0 16px;padding-left:22px;font-size:17px;line-height:1.6;color:#1b1f3b">');
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fa"><tr><td align="center" style="padding:24px 12px">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;font-family:Georgia,serif"><tr><td style="padding:32px 34px">
+<h1 style="font-size:28px;line-height:1.2;margin:0 0 18px;color:#1b1f3b">${TI.esc(i.headline)}</h1>
+${body}
+${link ? `<p style="margin:24px 0 0"><a href="${TI.esc(link)}" style="display:inline-block;background:#d2283c;color:#ffffff;font-family:Arial,sans-serif;font-weight:bold;text-decoration:none;padding:13px 22px;border-radius:6px">${TI.esc(i.cta)}</a></p>` : `<p style="margin:24px 0 0;font-weight:bold">${TI.esc(i.cta)}</p>`}
+</td></tr></table></td></tr></table>`;
+}
+
+const slug = () => sub.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'twelve-issues';
+TI.$('#dl-md').addEventListener('click', () => TI.download(`${slug()}-12-issues.md`,
+  `# ${sub.title}: 12 newsletters\n\n` + issues.map(i => `---\n\n## Issue ${i.number}${i.month_label ? ' (' + i.month_label + ')' : ''}\n\n**Subject:** ${i.subject}  \n**Preview:** ${i.preview_text}\n\n### ${i.headline}\n\n${i.body}\n\n**Call to action:** ${i.cta}${sub.settings.cta_url ? ' (' + sub.settings.cta_url + ')' : ''}\n\n*Image idea: ${i.image_idea || ''}*\n`).join('\n'), 'text/markdown'));
+TI.$('#dl-html').addEventListener('click', () => TI.download(`${slug()}-12-issues.html`,
+  `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${TI.esc(sub.title)}: 12 newsletters</title></head><body style="margin:0;background:#f4f6fa">` +
+  issues.map(i => `<div style="font-family:Arial,sans-serif;padding:24px 24px 0;color:#4a5072"><strong>Issue ${i.number}${i.month_label ? ', ' + TI.esc(i.month_label) : ''}</strong><br>Subject: ${TI.esc(i.subject)}<br>Preview: ${TI.esc(i.preview_text)}</div>` + emailHtml(i)).join('<hr style="border:0;border-top:2px dashed #d5dce8;margin:24px 0">') + '</body></html>', 'text/html'));
+TI.$('#dl-csv').addEventListener('click', () => {
+  const esc = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const rows = [['issue', 'month', 'subject', 'preview_text', 'headline', 'body', 'call_to_action', 'image_idea'], ...issues.map(i => [i.number, i.month_label, i.subject, i.preview_text, i.headline, i.body, i.cta, i.image_idea])];
+  TI.download(`${slug()}-12-issues.csv`, rows.map(r => r.map(esc).join(',')).join('\r\n'), 'text/csv');
+});
+
+function renderStars() {
+  TI.$('#stars').innerHTML = [1, 2, 3, 4, 5].map(n => `<button type="button" role="radio" aria-checked="${n === rating}" aria-label="${n} star${n > 1 ? 's' : ''}" class="${n <= rating ? 'on' : ''}" data-r="${n}">&#9733;</button>`).join('');
+  TI.$$('#stars button').forEach(b => b.addEventListener('click', () => { rating = Number(b.dataset.r); renderStars(); }));
+}
+TI.$('#fb-save').addEventListener('click', async () => {
+  try { await TI.api(`submissions/${id}/feedback`, { method: 'POST', body: { rating, feedback: TI.$('#fb').value } }); TI.$('#fb-ok').textContent = 'Thank you. Feedback sent.'; }
+  catch (err) { TI.$('#fb-ok').textContent = err.message; }
+});
+</script>
+</body>
+</html>

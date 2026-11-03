@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>New project | Twelve Issues</title>
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,550;12..96,650;12..96,800&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+<script src="/assets/extract.js"></script>
+</head>
+<body>
+<header class="top"><div class="wrap top-in">
+  <a class="brand" href="/"><span class="brand-mark">12</span>Twelve Issues</a>
+  <nav class="nav" id="nav"></nav>
+</div></header>
+<main class="page"><div class="narrow">
+  <div class="steps-bar" aria-hidden="true"><span class="on"></span><span></span><span></span><span></span></div>
+  <div id="msg" hidden></div>
+
+  <section data-step="1">
+    <h1>What are we writing about?</h1>
+    <p class="muted">Pick the one that fits. Both get 12 newsletters.</p>
+    <div class="choice-grid" role="radiogroup" aria-label="Project type">
+      <label class="choice"><input type="radio" name="kind" value="author" checked><strong>A book</strong><span class="muted">Novels, nonfiction, memoir, devotionals. Keep readers engaged and sell more copies.</span></label>
+      <label class="choice"><input type="radio" name="kind" value="business"><strong>A business</strong><span class="muted">Plumbers, dentists, shops, coaches, nonprofits. Stay top of mind with customers.</span></label>
+    </div>
+    <div class="field" style="margin-top:1.4rem"><label for="title" id="title-label">Book title</label><input id="title" type="text" maxlength="200" required></div>
+    <div class="wiz-nav"><span></span><button class="btn" data-next>Continue</button></div>
+  </section>
+
+  <section data-step="2" hidden>
+    <h1>Share your material</h1>
+    <p class="muted">The more we have, the more specific your issues will be. Upload files, answer the questions, or both.</p>
+    <div class="panel">
+      <h3>Upload files</h3>
+      <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose files to upload">
+        <strong>Drop files here or click to choose</strong>
+        <p class="small muted" style="margin:.4rem 0 0" id="drop-hint">PDF, Word, EPUB, or text. Your manuscript is read in your browser.</p>
+        <input type="file" id="file" multiple hidden>
+      </div>
+      <ul class="files" id="files"></ul>
+    </div>
+    <div class="panel">
+      <h3>Answer a few questions</h3>
+      <p class="small muted">Skip any that do not apply.</p>
+      <div id="questions"></div>
+    </div>
+    <div class="wiz-nav"><button class="btn btn-ghost" data-back>Back</button><button class="btn" data-next>Continue</button></div>
+  </section>
+
+  <section data-step="3" hidden>
+    <h1>Set the tone</h1>
+    <div class="row2">
+      <div class="field"><label for="tone">Voice</label>
+        <select id="tone"><option>Warm and conversational</option><option>Friendly and funny</option><option>Professional and direct</option><option>Inspiring and heartfelt</option><option>Expert and educational</option></select></div>
+      <div class="field"><label for="cadence">How often you will send</label>
+        <select id="cadence"><option value="monthly">Monthly (tied to the season)</option><option value="biweekly">Every two weeks</option><option value="weekly">Weekly</option></select></div>
+    </div>
+    <div class="row2">
+      <div class="field" id="start-wrap"><label for="start">First issue goes out in</label><select id="start"></select></div>
+      <div class="field"><label for="cta">Main link for readers <span class="hint" id="cta-hint">Where to buy the book</span></label><input id="cta" type="url" placeholder="https://"></div>
+    </div>
+    <div class="field"><label for="audience">Who reads your newsletter? <span class="hint">For example: cozy mystery fans, or homeowners in Fort Collins</span></label><input id="audience" type="text" maxlength="400"></div>
+    <div class="field"><label for="extra">Anything else we should know? <span class="hint">Topics to avoid, words you love, an upcoming launch or sale</span></label><textarea id="extra" maxlength="1500"></textarea></div>
+    <div class="wiz-nav"><button class="btn btn-ghost" data-back>Back</button><button class="btn" data-next>Review</button></div>
+  </section>
+
+  <section data-step="4" hidden>
+    <h1>Review and start</h1>
+    <div class="panel"><table class="summary-table" id="summary"></table></div>
+    <div class="panel" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+      <div><strong style="font-size:1.4rem" id="price">$9</strong> <span class="muted">for all 12 issues</span><br><span class="small muted">Secure checkout by Stripe. Full refund within 14 days if you are not happy.</span></div>
+      <button class="btn btn-red btn-lg" id="pay">Pay and write my issues</button>
+    </div>
+    <div class="wiz-nav"><button class="btn btn-ghost" data-back>Back</button><span></span></div>
+  </section>
+</div></main>
+<script src="/assets/app.js"></script>
+<script>
+const Q = {
+  author: [
+    ['author_name', 'Author name', 'text'],
+    ['genre', 'Genre or category', 'text', 'For example: cozy mystery, Christian living, business memoir'],
+    ['pitch', 'What is the book about, in a sentence or two?', 'area'],
+    ['readers', 'Who loves this kind of book?', 'area'],
+    ['characters_or_ideas', 'Main characters, or the big ideas of the book', 'area'],
+    ['story_behind', 'Why did you write it? Any research or real places behind it?', 'area'],
+    ['other_books', 'Other books or a series you want to mention', 'text'],
+  ],
+  business: [
+    ['industry', 'What kind of business is it?', 'text', 'For example: residential plumbing, family dental practice'],
+    ['location', 'Where do you serve customers?', 'text'],
+    ['services', 'Main products or services', 'area'],
+    ['ideal_customer', 'Who is your ideal customer?', 'area'],
+    ['common_questions', 'Questions customers ask you all the time', 'area'],
+    ['seasonal_notes', 'What changes for your customers through the year?', 'area', 'Busy seasons, weather, holidays, deadlines'],
+    ['offers', 'Offers, guarantees, or promotions you run', 'area'],
+    ['story', 'Your story: how you started, your team, what makes you different', 'area'],
+  ],
+};
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const state = { step: 1, files: [], answers: {} };
+let config = { price_cents: 900 };
+
+(async () => {
+  await TI.requireLogin();
+  try { config = await TI.api('config'); } catch {}
+  TI.$('#price').textContent = TI.money(config.price_cents);
+  TI.$('#pay').textContent = `Pay ${TI.money(config.price_cents)} and write my issues`;
+  const now = new Date();
+  TI.$('#start').innerHTML = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    return `<option value="${d.getMonth()}">${MONTHS[d.getMonth()]} ${d.getFullYear()}</option>`;
+  }).join('');
+  renderKind();
+})();
+
+const kind = () => TI.$('input[name=kind]:checked').value;
+function renderKind() {
+  const k = kind();
+  TI.$('#title-label').textContent = k === 'author' ? 'Book title' : 'Business name';
+  TI.$('#cta-hint').textContent = k === 'author' ? 'Where to buy the book' : 'Your booking page or website';
+  TI.$('#drop-hint').textContent = k === 'author'
+    ? 'Your manuscript as PDF, Word, EPUB, or text. It is read in your browser.'
+    : 'Brochures, service pages, FAQs, past blog posts. PDF, Word, or text.';
+  TI.$('#questions').innerHTML = Q[k].map(([id, label, type, hint]) => `
+    <div class="field"><label for="q_${id}">${TI.esc(label)}${hint ? `<span class="hint">${TI.esc(hint)}</span>` : ''}</label>
+    ${type === 'area' ? `<textarea id="q_${id}" data-q="${id}" maxlength="2000"></textarea>` : `<input type="text" id="q_${id}" data-q="${id}" maxlength="2000">`}</div>`).join('');
+  TI.$$('[data-q]').forEach(el => { el.value = state.answers[el.dataset.q] || ''; el.addEventListener('input', () => (state.answers[el.dataset.q] = el.value)); });
+}
+TI.$$('input[name=kind]').forEach(r => r.addEventListener('change', () => { state.answers = {}; renderKind(); }));
+TI.$('#cadence').addEventListener('change', e => TI.$('#start-wrap').hidden = e.target.value !== 'monthly');
+
+// Files
+const drop = TI.$('#drop'), input = TI.$('#file');
+input.accept = Extract.accept;
+drop.addEventListener('click', () => input.click());
+drop.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); input.click(); } });
+['dragenter', 'dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+['dragleave', 'drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+drop.addEventListener('drop', e => addFiles(e.dataTransfer.files));
+input.addEventListener('change', () => { addFiles(input.files); input.value = ''; });
+
+async function addFiles(list) {
+  for (const file of list) {
+    if (file.size > 60 * 1024 * 1024) { TI.showError(TI.$('#msg'), `${file.name} is larger than 60 MB.`); continue; }
+    const entry = { name: file.name, text: '', status: 'Reading...' };
+    state.files.push(entry); renderFiles();
+    try {
+      entry.text = await Extract.fromFile(file);
+      entry.status = entry.text.length < 50 ? 'No readable text found (is it a scanned image?)' : `${entry.text.split(/\s+/).length.toLocaleString()} words`;
+    } catch (err) { entry.status = err.message; entry.text = ''; }
+    renderFiles();
+  }
+}
+function renderFiles() {
+  TI.$('#files').innerHTML = state.files.map((f, i) => `<li><span>${TI.esc(f.name)} <span class="muted">${TI.esc(f.status)}</span></span><button type="button" data-rm="${i}" aria-label="Remove ${TI.esc(f.name)}">Remove</button></li>`).join('');
+  TI.$$('[data-rm]').forEach(b => b.addEventListener('click', () => { state.files.splice(Number(b.dataset.rm), 1); renderFiles(); }));
+}
+
+// Steps
+function go(n) {
+  TI.$('#msg').hidden = true;
+  state.step = n;
+  TI.$$('section[data-step]').forEach(s => (s.hidden = Number(s.dataset.step) !== n));
+  TI.$$('.steps-bar span').forEach((s, i) => s.classList.toggle('on', i < n));
+  if (n === 4) renderSummary();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+function validate(n) {
+  if (n === 1 && !TI.$('#title').value.trim()) return kind() === 'author' ? 'Please enter your book title.' : 'Please enter your business name.';
+  if (n === 2) {
+    if (state.files.some(f => f.status === 'Reading...')) return 'Still reading your files. One moment.';
+    const textLen = state.files.reduce((a, f) => a + f.text.length, 0);
+    const answered = Object.values(state.answers).join(' ').trim().length;
+    if (textLen < 500 && answered < 200) return 'Give us a little more to work with: upload a document, or answer a few more questions in detail.';
+  }
+  if (n === 3) { const u = TI.$('#cta').value.trim(); if (u && !/^https?:\/\//i.test(u)) return 'Links need to start with http:// or https://'; }
+  return '';
+}
+TI.$$('[data-next]').forEach(b => b.addEventListener('click', () => { const m = validate(state.step); if (m) return TI.showError(TI.$('#msg'), m); go(state.step + 1); }));
+TI.$$('[data-back]').forEach(b => b.addEventListener('click', () => go(state.step - 1)));
+
+function renderSummary() {
+  const words = state.files.reduce((a, f) => a + (f.text ? f.text.split(/\s+/).length : 0), 0);
+  const answered = Object.values(state.answers).filter(v => v.trim()).length;
+  const cad = TI.$('#cadence');
+  const rows = [
+    ['Project', `${kind() === 'author' ? 'Book' : 'Business'}: ${TI.$('#title').value.trim()}`],
+    ['Files', state.files.filter(f => f.text).length ? `${state.files.filter(f => f.text).map(f => f.name).join(', ')} (${words.toLocaleString()} words)` : 'None'],
+    ['Questions answered', String(answered)],
+    ['Voice', TI.$('#tone').value],
+    ['Schedule', cad.options[cad.selectedIndex].text + (cad.value === 'monthly' ? `, starting ${TI.$('#start').options[TI.$('#start').selectedIndex].text}` : '')],
+    ['Main link', TI.$('#cta').value.trim() || 'None'],
+  ];
+  TI.$('#summary').innerHTML = rows.map(([a, b]) => `<tr><td>${a}</td><td>${TI.esc(b)}</td></tr>`).join('');
+}
+
+TI.$('#pay').addEventListener('click', async e => {
+  const btn = e.currentTarget; btn.disabled = true; btn.textContent = 'Saving your project...';
+  try {
+    const files = state.files.filter(f => f.text);
+    const body = {
+      kind: kind(), title: TI.$('#title').value.trim(),
+      source_text: files.map(f => `=== ${f.name} ===\n${f.text}`).join('\n\n'),
+      source_files: files.map(f => ({ name: f.name, chars: f.text.length })),
+      questionnaire: state.answers,
+      settings: { tone: TI.$('#tone').value, cadence: TI.$('#cadence').value, start_month: Number(TI.$('#start').value),
+        cta_url: TI.$('#cta').value.trim(), audience: TI.$('#audience').value.trim(), extra: TI.$('#extra').value.trim() },
+    };
+    const { id } = await TI.api('submissions', { method: 'POST', body });
+    btn.textContent = 'Opening secure checkout...';
+    const r = await TI.api(`submissions/${id}/checkout`, { method: 'POST' });
+    location.href = r.url || `/app/submission.html?id=${id}`;
+  } catch (err) {
+    TI.showError(TI.$('#msg'), err.message);
+    btn.disabled = false; btn.textContent = `Pay ${TI.money(config.price_cents)} and write my issues`;
+  }
+});
+</script>
+</body>
+</html>

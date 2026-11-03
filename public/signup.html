@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Create your account | Twelve Issues</title>
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,550;12..96,650;12..96,800&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<header class="top"><div class="wrap top-in">
+  <a class="brand" href="/"><span class="brand-mark">12</span>Twelve Issues</a>
+  <nav class="nav" id="nav"></nav>
+</div></header>
+<main class="auth"><div class="auth-card">
+  <h1>Create your account</h1>
+  <p class="muted">Takes a minute. You only pay when you start a project.</p>
+  <div id="msg" hidden></div>
+  <form id="f" novalidate>
+    <div class="field"><label for="name">Your name</label><input id="name" type="text" autocomplete="name"></div>
+    <div class="field"><label for="company">Book title or business name <span class="hint">Optional</span></label><input id="company" type="text" autocomplete="organization"></div>
+    <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" required></div>
+    <div class="field"><label for="password">Password <span class="hint">At least 8 characters</span></label><input id="password" type="password" autocomplete="new-password" minlength="8" required></div>
+    <button class="btn" type="submit">Create account</button>
+    <p class="small muted" style="margin-top:1rem">By creating an account you agree to the <a href="/terms.html">terms</a> and <a href="/privacy.html">privacy policy</a>.</p>
+  </form>
+  <p class="auth-alt">Already have an account? <a href="/login.html">Log in</a></p>
+</div></main>
+<script src="/assets/app.js"></script>
+<script>
+TI.renderNav(null);
+TI.loadMe().then(u => { if (u) location.href = '/app/'; });
+const params = new URLSearchParams(location.search);
+const source = [params.get('utm_source'), params.get('utm_campaign'), document.referrer].filter(Boolean).join(' | ').slice(0, 300);
+TI.$('#f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = e.submitter; btn.disabled = true;
+  try {
+    await TI.api('auth/signup', { method: 'POST', body: {
+      name: TI.$('#name').value, company: TI.$('#company').value, email: TI.$('#email').value, password: TI.$('#password').value, source } });
+    location.href = '/app/new.html';
+  } catch (err) { TI.showError(TI.$('#msg'), err.message); btn.disabled = false; }
+});
+</script>
+</body>
+</html>

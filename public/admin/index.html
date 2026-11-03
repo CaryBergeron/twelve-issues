@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin | Twelve Issues</title>
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,550;12..96,650;12..96,800&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<header class="top"><div class="wrap top-in">
+  <a class="brand" href="/"><span class="brand-mark">12</span>Twelve Issues</a>
+  <nav class="nav" id="nav"></nav>
+</div></header>
+<main class="page"><div class="wrap">
+  <div class="page-head"><h1>Admin</h1><span class="small muted" id="updated"></span></div>
+  <div id="msg" hidden></div>
+  <div class="stats" id="stats"></div>
+  <div class="tabs" role="tablist">
+    <button role="tab" aria-selected="true" data-tab="projects">Projects</button>
+    <button role="tab" aria-selected="false" data-tab="users">Users</button>
+    <button role="tab" aria-selected="false" data-tab="activity">Activity</button>
+    <button role="tab" aria-selected="false" data-tab="exports">Exports</button>
+  </div>
+  <section data-panel="projects">
+    <div style="display:flex;gap:.6rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap">
+      <label for="filter" style="margin:0">Status</label>
+      <select id="filter" style="width:auto"><option value="">All</option><option value="awaiting_payment">Waiting for payment</option><option value="paid">Ready to write</option><option value="generating">Writing</option><option value="complete">Ready</option><option value="failed">Needs a retry</option></select>
+    </div>
+    <div class="table-wrap"><table class="data" id="t-projects"></table></div>
+  </section>
+  <section data-panel="users" hidden><div class="table-wrap"><table class="data" id="t-users"></table></div></section>
+  <section data-panel="activity" hidden><div class="table-wrap"><table class="data" id="t-events"></table></div></section>
+  <section data-panel="exports" hidden>
+    <div class="panel">
+      <h3>Download your data</h3>
+      <p class="muted">Spreadsheets of everything collected so far, for analysis or building the next version.</p>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <a class="btn btn-ghost" href="/api/admin/export/users.csv">Users</a>
+        <a class="btn btn-ghost" href="/api/admin/export/submissions.csv">Projects and questionnaire answers</a>
+        <a class="btn btn-ghost" href="/api/admin/export/issues.csv">Every issue written</a>
+      </div>
+    </div>
+  </section>
+</div></main>
+<div class="scrim" id="scrim" hidden></div>
+<aside class="drawer" id="drawer" aria-label="Project details"></aside>
+<script src="/assets/app.js"></script>
+<script>
+let projects = [];
+(async () => {
+  await TI.requireLogin({ admin: true });
+  TI.$$('.tabs button').forEach(b => b.addEventListener('click', () => {
+    TI.$$('.tabs button').forEach(x => x.setAttribute('aria-selected', String(x === b)));
+    TI.$$('[data-panel]').forEach(p => (p.hidden = p.dataset.panel !== b.dataset.tab));
+    if (b.dataset.tab === 'users') loadUsers();
+    if (b.dataset.tab === 'activity') loadEvents();
+  }));
+  TI.$('#filter').addEventListener('change', loadProjects);
+  TI.$('#scrim').addEventListener('click', closeDrawer);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+  await Promise.all([loadStats(), loadProjects()]);
+})();
+
+const n = v => Number(v || 0).toLocaleString();
+async function loadStats() {
+  try {
+    const s = await TI.api('admin/stats');
+    const kinds = Object.fromEntries((s.by_kind || []).map(k => [k.kind, k.n]));
+    const cost = (s.input_tokens * 3 + s.output_tokens * 15) / 1e6; // rough Sonnet pricing per million tokens
+    const cards = [
+      ['Users', n(s.users), `${n(s.users_7d)} in the last 7 days`],
+      ['Projects', n(s.submissions), `${n(kinds.author)} books, ${n(kinds.business)} businesses`],
+      ['Paid', n(s.paid), s.submissions ? Math.round((s.paid / s.submissions) * 100) + '% of projects' : ''],
+      ['Revenue', TI.money(s.revenue_cents), ''],
+      ['Completed', n(s.complete), s.failed ? `${n(s.failed)} need a retry` : 'No failures'],
+      ['Avg rating', s.avg_rating ?? 'None yet', s.ratings ? `${n(s.ratings)} ratings` : ''],
+      ['AI cost (est.)', '$' + cost.toFixed(2), `${n(s.input_tokens + s.output_tokens)} tokens`],
+    ];
+    TI.$('#stats').innerHTML = cards.map(([a, b, c]) => `<div class="stat"><span>${a}</span><strong>${TI.esc(b)}</strong>${c ? `<span class="small">${TI.esc(c)}</span>` : ''}</div>`).join('');
+    TI.$('#updated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  } catch (err) { TI.showError(TI.$('#msg'), err.message); }
+}
+
+async function loadProjects() {
+  const status = TI.$('#filter').value;
+  const { submissions } = await TI.api('admin/submissions' + (status ? '?status=' + status : ''));
+  projects = submissions;
+  TI.$('#t-projects').innerHTML = `<thead><tr><th>Created</th><th>Customer</th><th>Project</th><th>Type</th><th>Status</th><th>Source</th><th>Paid</th><th>Rating</th></tr></thead><tbody>` +
+    (submissions.length ? submissions.map(s => `<tr class="click" tabindex="0" data-id="${s.id}">
+      <td>${TI.datetime(s.created_at)}</td><td>${TI.esc(s.email)}</td><td>${TI.esc(s.title)}</td><td>${s.kind}</td>
+      <td><span class="pill pill-${s.status}">${TI.STATUS[s.status] || s.status}</span></td>
+      <td>${n(s.source_chars)} chars</td><td>${s.comped ? 'Comped' : s.paid_at ? TI.money(s.price_cents) : ''}</td><td>${s.rating ? s.rating + '/5' : ''}</td></tr>`).join('')
+      : '<tr><td colspan="8" class="muted">No projects yet.</td></tr>') + '</tbody>';
+  TI.$$('#t-projects tr.click').forEach(r => {
+    r.addEventListener('click', () => openDrawer(r.dataset.id));
+    r.addEventListener('keydown', e => { if (e.key === 'Enter') openDrawer(r.dataset.id); });
+  });
+}
+
+async function loadUsers() {
+  const { users } = await TI.api('admin/users');
+  TI.$('#t-users').innerHTML = `<thead><tr><th>Joined</th><th>Email</th><th>Name</th><th>Book or business</th><th>Projects</th><th>Spent</th><th>Last login</th><th>Came from</th></tr></thead><tbody>` +
+    users.map(u => `<tr><td>${TI.date(u.created_at)}</td><td>${TI.esc(u.email)}${u.role === 'admin' ? ' <span class="pill">admin</span>' : ''}</td><td>${TI.esc(u.name)}</td><td>${TI.esc(u.company)}</td>
+      <td>${u.submissions}</td><td>${TI.money(u.spent_cents)}</td><td>${TI.datetime(u.last_login_at)}</td><td class="small">${TI.esc(u.signup_source)}</td></tr>`).join('') + '</tbody>';
+}
+
+async function loadEvents() {
+  const { events } = await TI.api('admin/events');
+  TI.$('#t-events').innerHTML = `<thead><tr><th>When</th><th>Event</th><th>User</th><th>Details</th></tr></thead><tbody>` +
+    events.map(e => `<tr><td>${TI.datetime(e.created_at)}</td><td>${TI.esc(e.type.replace(/_/g, ' '))}</td><td>${TI.esc(e.email || '')}</td><td class="small">${TI.esc(e.data || '')}</td></tr>`).join('') + '</tbody>';
+}
+
+async function openDrawer(id) {
+  const d = TI.$('#drawer');
+  d.innerHTML = '<p class="muted">Loading...</p>'; d.classList.add('open'); TI.$('#scrim').hidden = false;
+  const { submission: s, issues, events } = await TI.api('admin/submissions/' + id);
+  const kv = obj => Object.entries(obj || {}).filter(([, v]) => v !== '' && v !== null).map(([k, v]) => `<tr><td>${TI.esc(k.replace(/_/g, ' '))}</td><td>${TI.esc(v)}</td></tr>`).join('') || '<tr><td colspan="2" class="muted">None</td></tr>';
+  d.innerHTML = `
+    <div style="display:flex;justify-content:space-between;gap:1rem;align-items:flex-start">
+      <div><h2 style="margin-bottom:.2rem">${TI.esc(s.title)}</h2><p class="muted small">${TI.esc(s.email)} &nbsp; ${s.kind} &nbsp; created ${TI.datetime(s.created_at)}</p></div>
+      <button class="btn btn-sm btn-ghost" id="close">Close</button>
+    </div>
+    <p><span class="pill pill-${s.status}">${TI.STATUS[s.status] || s.status}</span> &nbsp; step ${s.progress} of 4 &nbsp; ${s.model ? TI.esc(s.model) : ''} &nbsp; ${n(s.input_tokens)} in / ${n(s.output_tokens)} out tokens</p>
+    ${s.error ? `<div class="alert alert-error">${TI.esc(s.error)}</div>` : ''}
+    <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1.2rem">
+      ${s.status === 'awaiting_payment' ? '<button class="btn btn-sm" id="comp">Comp this project (free)</button>' : '<button class="btn btn-sm btn-ghost" id="reset">Rewrite from scratch</button>'}
+      <a class="btn btn-sm btn-ghost" href="/app/submission.html?id=${s.id}" target="_blank">Open customer view</a>
+    </div>
+    ${s.rating ? `<div class="panel"><strong>Rating ${s.rating}/5</strong><p class="muted" style="margin:.4rem 0 0">${TI.esc(s.feedback || 'No comment')}</p></div>` : ''}
+    <h3>Questionnaire</h3><table class="summary-table">${kv(s.questionnaire)}</table>
+    <h3 style="margin-top:1.2rem">Settings</h3><table class="summary-table">${kv(s.settings)}</table>
+    <h3 style="margin-top:1.2rem">Uploaded files</h3><p class="small">${(s.source_files || []).map(f => `${TI.esc(f.name)} (${n(f.chars)} chars)`).join(', ') || 'None'}</p>
+    ${s.source_excerpt ? `<details><summary class="small">Source text, first 5,000 characters</summary><pre>${TI.esc(s.source_excerpt)}</pre></details>` : ''}
+    ${s.brief ? `<h3 style="margin-top:1.2rem">Plan</h3><p class="small muted">${TI.esc(s.brief.summary || '')}</p><ol class="small">${(s.brief.issues || []).map(i => `<li><strong>${TI.esc(i.label)}</strong>: ${TI.esc(i.theme)}. ${TI.esc(i.angle)}</li>`).join('')}</ol>` : ''}
+    ${issues.length ? `<h3 style="margin-top:1.2rem">Issues</h3>${issues.map(i => `<details><summary class="small"><strong>${i.number}.</strong> ${TI.esc(i.subject)}</summary><div class="prose" style="font-size:1rem"><h3>${TI.esc(i.headline)}</h3>${TI.md(i.body)}<p><em>${TI.esc(i.cta)}</em></p></div></details>`).join('')}` : ''}
+    <h3 style="margin-top:1.2rem">History</h3><table class="summary-table">${events.map(e => `<tr><td>${TI.datetime(e.created_at)}</td><td>${TI.esc(e.type.replace(/_/g, ' '))}</td></tr>`).join('')}</table>`;
+  TI.$('#close').addEventListener('click', closeDrawer);
+  TI.$('#comp')?.addEventListener('click', async () => { await TI.api(`admin/submissions/${id}/comp`, { method: 'POST' }); openDrawer(id); loadProjects(); loadStats(); });
+  TI.$('#reset')?.addEventListener('click', async () => {
+    if (!confirmReset()) return;
+    await TI.api(`admin/submissions/${id}/reset`, { method: 'POST' }); openDrawer(id); loadProjects();
+  });
+}
+// Two-click confirm so a stray click never wipes a customer's issues
+let armed = false;
+function confirmReset() {
+  if (armed) { armed = false; return true; }
+  armed = true; const b = TI.$('#reset'); b.textContent = 'Click again to delete these issues and rewrite'; b.classList.add('btn-red');
+  setTimeout(() => { armed = false; }, 5000);
+  return false;
+}
+function closeDrawer() { TI.$('#drawer').classList.remove('open'); TI.$('#scrim').hidden = true; }
+</script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Log in | Twelve Issues</title>
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,550;12..96,650;12..96,800&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<header class="top"><div class="wrap top-in">
+  <a class="brand" href="/"><span class="brand-mark">12</span>Twelve Issues</a>
+  <nav class="nav" id="nav"></nav>
+</div></header>
+<main class="auth"><div class="auth-card">
+  <h1>Welcome back</h1>
+  <p class="muted">Log in to see your projects.</p>
+  <div id="msg" hidden></div>
+  <form id="f" novalidate>
+    <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" required></div>
+    <div class="field"><label for="password">Password</label><input id="password" type="password" autocomplete="current-password" required></div>
+    <button class="btn" type="submit">Log in</button>
+  </form>
+  <p class="auth-alt"><a href="/forgot.html">Forgot your password?</a></p>
+  <p class="auth-alt">New here? <a href="/signup.html">Create an account</a></p>
+</div></main>
+<script src="/assets/app.js"></script>
+<script>
+TI.renderNav(null);
+const next = new URLSearchParams(location.search).get('next');
+const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/app/';
+TI.loadMe().then(u => { if (u) location.href = safeNext; });
+TI.$('#f').addEventListener('submit', async e => {
+  e.preventDefault();
+  const btn = e.submitter; btn.disabled = true;
+  try {
+    await TI.api('auth/login', { method: 'POST', body: { email: TI.$('#email').value, password: TI.$('#password').value } });
+    location.href = safeNext;
+  } catch (err) { TI.showError(TI.$('#msg'), err.message); btn.disabled = false; }
+});
+</script>
+</body>
+</html>

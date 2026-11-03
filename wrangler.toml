@@ -1,0 +1,17 @@
+name = "twelve-issues"
+pages_build_output_dir = "public"
+compatibility_date = "2026-10-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "twelve-issues"
+database_id = "626bfa37-b235-4322-9fd5-3966124d3277"
+
+[vars]
+APP_URL = "https://twelveissues.com"
+PRICE_CENTS = "900"
+AI_MODEL = "claude-sonnet-5-5"
+
+# Secrets are set in the Cloudflare dashboard, never in this file:
+# ANTHROPIC_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, ADMIN_EMAILS
+# Optional: RESEND_API_KEY and FROM_EMAIL for password reset emails
