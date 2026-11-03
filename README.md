@@ -1,6 +1,6 @@
 # Twelve Issues
 
-**One upload. A year of newsletters.** Customers upload a manuscript or business content (PDF, DOCX, EPUB, TXT) and/or answer a questionnaire, pay $9, and get 12 ready-to-send newsletters.
+**One upload. One year of newsletters.** Customers upload a manuscript or business content (PDF, DOCX, EPUB, TXT) and/or answer a questionnaire, pay $9, and get 12 ready-to-send newsletters.
 
 ## How it is built
 - **Front end:** static pages in `public/` (no build step). Files are read in the browser (PDF.js, Mammoth, JSZip), so only text is sent to the server.
