@@ -14,7 +14,7 @@
 </head>
 <body>
 <header class="top"><div class="wrap top-in">
-  <a class="brand" href="/"><span class="brand-mark">12</span>Twelve Issues</a>
+  <a class="brand" href="/"><img src="/assets/logo.svg" alt="Twelve Issues" width="224" height="27"></a>
   <nav class="nav" id="nav"><a href="#how" class="hide-sm">How it works</a><a href="#pricing" class="hide-sm">Pricing</a><a href="/contact.html" class="hide-sm">Contact</a><a href="/login.html">Log in</a><a class="btn btn-sm" href="/signup.html">Get started</a></nav>
 </div></header>
 
@@ -33,11 +33,14 @@
         <div class="toggle" role="group" aria-label="Choose an example book">
           <button type="button" data-set="romance" aria-pressed="true">Romance</button>
           <button type="button" data-set="mystery" aria-pressed="false">Mystery</button>
+          <button type="button" data-set="fantasy" aria-pressed="false">Fantasy</button>
           <button type="button" data-set="scifi" aria-pressed="false">Sci-Fi</button>
+          <button type="button" data-set="horror" aria-pressed="false">Horror</button>
           <button type="button" data-set="nonfiction" aria-pressed="false">Non-Fiction</button>
         </div>
         <ol class="stack" id="stack"></ol>
-        <figcaption id="stack-title">A year of subject lines from a small-town romance</figcaption>
+        <figcaption><span id="stack-title">A year of subject lines from a small-town romance</span>
+          <span class="any-genre">Just examples. Twelve Issues works with every genre, fiction or nonfiction.</span></figcaption>
       </figure>
     </div>
   </section>
@@ -111,7 +114,7 @@
     <div class="narrow faq">
       <h2>Questions authors ask</h2>
       <details><summary>Will it spoil my plot?</summary><p>No. We plan around your major twists and endings and write the way you would talk to readers who have not finished yet. Tell us anything that is off limits and we will leave it out.</p></details>
-      <details><summary>Does it work for nonfiction?</summary><p>Yes. Devotionals, how-to, history, memoir, and business books all work well. Nonfiction issues lean on key ideas, stories, and practical takeaways from the book.</p></details>
+      <details><summary>Does it work for my genre?</summary><p>Yes. Romance, mystery, fantasy, sci-fi, horror, thrillers, historical, literary, children’s and YA all work, and so do devotionals, how-to, history, memoir, and business books. Nonfiction issues lean on key ideas, stories, and practical takeaways from the book.</p></details>
       <details><summary>I write a series. Can it mention my other books?</summary><p>Yes. List them when you set up your project and the issues will point readers to the rest of the series at natural moments.</p></details>
       <details><summary>Is my manuscript safe?</summary><p>Your files are read in your own browser and only the text is sent to us. We use it to write your issues and nothing else. It is never used to train AI models, and we delete it on request.</p></details>
       <details><summary>Which email service does it work with?</summary><p>All of them. Copy an issue into Mailchimp, Kit, MailerLite, Substack, or plain Gmail, or download every issue as Markdown or email-ready HTML.</p></details>
@@ -140,11 +143,21 @@
       'Why I almost cut the harbor scene', 'You asked, I answered', 'A summer list for mystery lovers',
       'The blueberry pie from chapter nine', 'A map of Port Haven', 'The deleted scene, finally',
       'Fog season and the night on the pier', 'A short story to say thank you', 'A gift for the mystery fan you love'] },
+    fantasy: { title: 'A year of subject lines from an epic fantasy series', months: [
+      'The map I drew on a napkin', 'Meet the villain\u2019s mother', 'How the salt magic works',
+      'A scene from Kael\u2019s side', 'The songs the sailors sing', 'Book two: the first page',
+      'The chapter I cut', 'Forging the crown', 'Preorder day is here',
+      'The haunted keep at Dunmarrow', 'Thank you, and a signed copy', 'Gifts for the fantasy reader'] },
     scifi: { title: 'A year of subject lines from a space opera series', months: [
       'The star chart behind chapter one', 'How faster-than-light works in my universe', 'Meet Wren, the ship\u2019s AI',
       'The real science I bent (a little)', 'You asked about that ending', 'A summer list for stargazers',
       'A scene from the engine room', 'Inside the Corvane rebellion', 'The planet I deleted',
       'Book two: the first page', 'A short story from the outer ring', 'Gifts for the sci-fi reader'] },
+    horror: { title: 'A year of subject lines from a small-town horror novel', months: [
+      'The house on Ashgrove Road is real', 'A love story, but haunted', 'The sound in chapter three',
+      'What actually scares me', 'You asked: is the cellar real?', 'Summer reads for after dark',
+      'The campfire story that started it', 'A map of Hollow Pines', 'The chapter my editor cut',
+      'Thirteen nights until Halloween', 'A short story for the long nights', 'Gifts for the horror fan'] },
     nonfiction: { title: 'A year of subject lines from a backyard gardening guide', months: [
       'Plan your garden on paper first', 'Seeds to start indoors this month', 'The soil test that saves a season',
       'Five mistakes from my first spring', 'You asked: how much sun is enough?', 'Water less, grow more',

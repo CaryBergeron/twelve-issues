@@ -12,7 +12,7 @@
 </head>
 <body>
 <header class="top"><div class="wrap top-in">
-  <a class="brand" href="/"><span class="brand-mark">12</span>Twelve Issues</a>
+  <a class="brand" href="/"><img src="/assets/logo.svg" alt="Twelve Issues" width="224" height="27"></a>
   <nav class="nav" id="nav"></nav>
 </div></header>
 <main class="page"><div class="narrow">
@@ -28,8 +28,8 @@
   </section>
 
   <section data-step="2" hidden>
-    <h1>Share your material</h1>
-    <p class="muted">The more we have, the more specific your issues will be. Upload files, answer the questions, or both.</p>
+    <h1>Tell us about your book</h1>
+    <p class="muted">Upload the book, then tap a few answers. No essays required.</p>
     <div class="panel">
       <h3>Upload files</h3>
       <div class="drop" id="drop" tabindex="0" role="button" aria-label="Choose files to upload">
@@ -40,8 +40,8 @@
       <ul class="files" id="files"></ul>
     </div>
     <div class="panel">
-      <h3>Answer a few questions</h3>
-      <p class="small muted">Skip any that do not apply.</p>
+      <h3>Tap what fits</h3>
+      <p class="small muted">Skip anything that does not apply. Each answer makes your issues more specific.</p>
       <div id="questions"></div>
     </div>
     <div class="wiz-nav"><button class="btn btn-ghost" data-back>Back</button><button class="btn" data-next>Continue</button></div>
@@ -76,25 +76,29 @@
 </div></main>
 <script src="/assets/app.js"></script>
 <script>
+// Author questions are tap-to-answer. type: one (pick one), many (pick any), text, area
 const Q = {
   author: [
-    ['author_name', 'Author name', 'text'],
-    ['genre', 'Genre or category', 'text', 'For example: cozy mystery, Christian living, business memoir'],
-    ['pitch', 'What is the book about, in a sentence or two?', 'area'],
-    ['readers', 'Who loves this kind of book?', 'area'],
-    ['characters_or_ideas', 'Main characters, or the big ideas of the book', 'area'],
-    ['story_behind', 'Why did you write it? Any research or real places behind it?', 'area'],
-    ['other_books', 'Other books or a series you want to mention', 'text'],
+    { id: 'author_name', label: 'Author name, as it appears on the cover', type: 'text' },
+    { id: 'book_type', label: 'What kind of book is it?', type: 'one', options: ['A standalone novel', 'A book in a series', 'Nonfiction', 'Memoir', 'Children’s or YA', 'Short stories or poetry'] },
+    { id: 'genre', label: 'Genre', type: 'one', other: true, options: ['Romance', 'Mystery or thriller', 'Fantasy', 'Sci-fi', 'Horror', 'Historical', 'Literary', 'Christian or faith', 'Self-help', 'Business', 'History', 'Other'] },
+    { id: 'publishing_stage', label: 'Where is the book right now?', type: 'one', options: ['Coming out soon', 'Just launched', 'Out for a while', 'I am writing the next one'] },
+    { id: 'newsletter_goals', label: 'What should your newsletters do?', hint: 'Pick all that fit', type: 'many', options: ['Sell more copies', 'Get more reviews', 'Build preorders for my next book', 'Keep readers warm between books', 'Grow readership for my series', 'Build a personal connection'] },
+    { id: 'content_ok', label: 'What are you happy for us to share?', hint: 'Pick all that fit', type: 'many', options: ['Behind-the-scenes stories', 'Character spotlights', 'Research and real places', 'Deleted or bonus scenes', 'Reader questions', 'My writing life', 'Seasonal tie-ins', 'Book recommendations', 'Giveaways'] },
+    { id: 'spoilers', label: 'How careful should we be with spoilers?', type: 'one', options: ['No spoilers at all', 'Light teasers are fine', 'Assume readers have finished'] },
+    { id: 'buy_where', label: 'Where can readers buy it?', hint: 'Pick all that apply', type: 'many', options: ['Amazon', 'Barnes & Noble', 'Apple Books', 'Kobo', 'Audible', 'Bookshop.org', 'My own website'] },
+    { id: 'other_books', label: 'Should issues mention other books?', type: 'one', options: ['Just this book', 'Other books in this series', 'Other books I have written'] },
+    { id: 'pitch', label: 'In a sentence or two, what is the book about?', hint: 'Optional if you uploaded the book', type: 'area' },
   ],
   business: [
-    ['industry', 'What kind of business is it?', 'text', 'For example: residential plumbing, family dental practice'],
-    ['location', 'Where do you serve customers?', 'text'],
-    ['services', 'Main products or services', 'area'],
-    ['ideal_customer', 'Who is your ideal customer?', 'area'],
-    ['common_questions', 'Questions customers ask you all the time', 'area'],
-    ['seasonal_notes', 'What changes for your customers through the year?', 'area', 'Busy seasons, weather, holidays, deadlines'],
-    ['offers', 'Offers, guarantees, or promotions you run', 'area'],
-    ['story', 'Your story: how you started, your team, what makes you different', 'area'],
+    { id: 'industry', label: 'What kind of business is it?', type: 'text', hint: 'For example: residential plumbing, family dental practice' },
+    { id: 'location', label: 'Where do you serve customers?', type: 'text' },
+    { id: 'services', label: 'Main products or services', type: 'area' },
+    { id: 'ideal_customer', label: 'Who is your ideal customer?', type: 'area' },
+    { id: 'common_questions', label: 'Questions customers ask you all the time', type: 'area' },
+    { id: 'seasonal_notes', label: 'What changes for your customers through the year?', type: 'area', hint: 'Busy seasons, weather, holidays, deadlines' },
+    { id: 'offers', label: 'Offers, guarantees, or promotions you run', type: 'area' },
+    { id: 'story', label: 'Your story: how you started, your team, what makes you different', type: 'area' },
   ],
 };
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -122,10 +126,32 @@ function renderKind() {
   TI.$('#drop-hint').textContent = k === 'author'
     ? 'Your manuscript as PDF, Word, EPUB, or text. It is read in your browser.'
     : 'Brochures, service pages, FAQs, past blog posts. PDF, Word, or text.';
-  TI.$('#questions').innerHTML = Q[k].map(([id, label, type, hint]) => `
-    <div class="field"><label for="q_${id}">${TI.esc(label)}${hint ? `<span class="hint">${TI.esc(hint)}</span>` : ''}</label>
-    ${type === 'area' ? `<textarea id="q_${id}" data-q="${id}" maxlength="2000"></textarea>` : `<input type="text" id="q_${id}" data-q="${id}" maxlength="2000">`}</div>`).join('');
+  TI.$('#questions').innerHTML = Q[k].map(q => {
+    const hint = q.hint ? `<span class="hint">${TI.esc(q.hint)}</span>` : '';
+    if (q.type === 'one' || q.type === 'many') {
+      const kindAttr = q.type === 'one' ? 'radio' : 'checkbox';
+      return `<fieldset class="chips" data-chips="${q.id}" data-type="${q.type}"><legend>${TI.esc(q.label)}${hint}</legend>
+        <div class="chip-row">${q.options.map(o => `<label class="chip"><input type="${kindAttr}" name="c_${q.id}" value="${TI.esc(o)}"><span>${TI.esc(o)}</span></label>`).join('')}</div>
+        ${q.other ? `<input type="text" class="chip-other" id="other_${q.id}" placeholder="Which genre?" maxlength="80" hidden>` : ''}</fieldset>`;
+    }
+    return `<div class="field"><label for="q_${q.id}">${TI.esc(q.label)}${hint}</label>
+      ${q.type === 'area' ? `<textarea id="q_${q.id}" data-q="${q.id}" maxlength="2000" rows="3"></textarea>` : `<input type="text" id="q_${q.id}" data-q="${q.id}" maxlength="2000">`}</div>`;
+  }).join('');
   TI.$$('[data-q]').forEach(el => { el.value = state.answers[el.dataset.q] || ''; el.addEventListener('input', () => (state.answers[el.dataset.q] = el.value)); });
+  TI.$$('[data-chips]').forEach(fs => {
+    const id = fs.dataset.chips, other = TI.$('#other_' + id);
+    const sync = () => {
+      const picked = TI.$$('input:checked', fs).map(i => i.value);
+      if (other) {
+        other.hidden = !picked.includes('Other');
+        const i = picked.indexOf('Other');
+        if (i > -1 && other.value.trim()) picked[i] = other.value.trim();
+      }
+      state.answers[id] = picked.join(', ');
+    };
+    fs.addEventListener('change', sync);
+    if (other) other.addEventListener('input', sync);
+  });
 }
 TI.$$('input[name=kind]').forEach(r => r.addEventListener('change', () => { state.answers = {}; renderKind(); }));
 TI.$('#cadence').addEventListener('change', e => TI.$('#start-wrap').hidden = e.target.value !== 'monthly');
@@ -172,7 +198,9 @@ function validate(n) {
     if (state.files.some(f => f.status === 'Reading...')) return 'Still reading your files. One moment.';
     const textLen = state.files.reduce((a, f) => a + f.text.length, 0);
     const answered = Object.values(state.answers).join(' ').trim().length;
-    if (textLen < 500 && answered < 200) return 'Give us a little more to work with: upload a document, or answer a few more questions in detail.';
+    const pitch = (state.answers.pitch || '').trim().length;
+    if (kind() === 'author' && textLen < 500 && pitch < 60) return 'Upload your book, or tell us in a sentence or two what it is about.';
+    if (kind() !== 'author' && textLen < 500 && answered < 200) return 'Give us a little more to work with: upload a document, or answer a few more questions in detail.';
   }
   if (n === 3) { const u = TI.$('#cta').value.trim(); if (u && !/^https?:\/\//i.test(u)) return 'Links need to start with http:// or https://'; }
   return '';
@@ -182,7 +210,7 @@ TI.$$('[data-back]').forEach(b => b.addEventListener('click', () => go(state.ste
 
 function renderSummary() {
   const words = state.files.reduce((a, f) => a + (f.text ? f.text.split(/\s+/).length : 0), 0);
-  const answered = Object.values(state.answers).filter(v => v.trim()).length;
+  const answered = Object.values(state.answers).filter(v => String(v).trim()).length;
   const cad = TI.$('#cadence');
   const rows = [
     ['Project', `${kind() === 'author' ? 'Book' : 'Business'}: ${TI.$('#title').value.trim()}`],

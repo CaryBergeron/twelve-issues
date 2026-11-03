@@ -58,7 +58,12 @@ function describeInputs(sub) {
   const lines = [];
   lines.push(`Customer type: ${sub.kind === 'author' ? 'Author promoting a book' : 'Business sending a customer newsletter'}`);
   lines.push(`Project title: ${sub.title}`);
-  for (const [k, v] of Object.entries(q)) if (v) lines.push(`${k.replace(/_/g, ' ')}: ${v}`);
+  const LABELS = {
+    author_name: 'Author name', book_type: 'Kind of book', genre: 'Genre', publishing_stage: 'Where the book is now',
+    newsletter_goals: 'What the newsletters should achieve (author picked)', content_ok: 'Content the author is happy to share (use only these kinds of issues where possible)',
+    spoilers: 'Spoiler rule (follow strictly)', buy_where: 'Where readers can buy the book', other_books: 'Other books to mention', pitch: 'What the book is about',
+  };
+  for (const [k, v] of Object.entries(q)) if (v && String(v).trim()) lines.push(`${LABELS[k] || k.replace(/_/g, ' ')}: ${v}`);
   lines.push(`Tone requested: ${s.tone || 'warm and conversational'}`);
   lines.push(`Sending cadence: ${s.cadence || 'monthly'}`);
   if (s.cta_url) lines.push(`Main link to drive readers to: ${s.cta_url}`);
@@ -72,7 +77,7 @@ You plan a 12-issue series that a real reader would look forward to: every issue
 Rules:
 - Use only facts, stories, names, and details found in the source material or customer answers. Never invent quotes, statistics, testimonials, prices, or credentials.
 - No two issues may share the same angle. Mix formats across the year (story, how-to, behind the scenes, reader question, list, seasonal, myth vs fact, spotlight).
-- For an author: build reader relationship and book sales without spoiling major plot twists. For a business: be genuinely useful first and promotional second.
+- For an author: build reader relationship and book sales without spoiling major plot twists. Follow the author's spoiler rule exactly, draw issue types from the content they said they are happy to share, steer calls to action toward their stated goals, and name only the stores they listed. For a business: be genuinely useful first and promotional second.
 - If issues are monthly, tie topics to the month or season where it fits naturally.
 - Plain language. No long dashes (use commas, colons, or periods instead).
 Respond with JSON only, no commentary.`;

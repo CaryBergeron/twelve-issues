@@ -11,7 +11,7 @@
 </head>
 <body>
 <header class="top"><div class="wrap top-in">
-  <a class="brand" href="/"><span class="brand-mark">12</span>Twelve Issues</a>
+  <a class="brand" href="/"><img src="/assets/logo.svg" alt="Twelve Issues" width="224" height="27"></a>
   <nav class="nav" id="nav"></nav>
 </div></header>
 <main class="page"><div class="wrap">
@@ -38,7 +38,7 @@
 
   <section id="done-panel" hidden>
     <div class="panel" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
-      <div><strong>All 12 issues are ready.</strong> <span class="muted">Copy them one at a time or download them all.</span></div>
+      <div><strong>All 12 issues are ready.</strong> <span class="muted">Edit anything you like, then copy them one at a time or download them all.</span></div>
       <div style="display:flex;gap:.5rem;flex-wrap:wrap">
         <button class="btn btn-sm btn-ghost" id="dl-md">Download Markdown</button>
         <button class="btn btn-sm btn-ghost" id="dl-html">Download email HTML</button>
@@ -50,7 +50,7 @@
       <article class="panel" id="issue" style="margin:0"></article>
     </div>
     <div class="panel" style="margin-top:1.4rem" id="feedback">
-      <h3>How did we do?</h3>
+      <h3>How did we do? <span class="small muted" style="font-weight:400">Optional</span></h3>
       <div class="stars" id="stars" role="radiogroup" aria-label="Rating"></div>
       <div class="field" style="margin-top:.8rem"><label for="fb">What would make these better? <span class="hint">Optional, but it helps us a lot</span></label><textarea id="fb" maxlength="3000"></textarea></div>
       <button class="btn btn-sm" id="fb-save">Send feedback</button> <span class="small muted" id="fb-ok"></span>
@@ -167,6 +167,7 @@ function show(n) {
   const link = sub.settings.cta_url;
   TI.$('#issue').innerHTML = `
     <div class="issue-tools">
+      <button class="btn btn-sm btn-gold" id="edit">Edit issue</button>
       <button class="btn btn-sm" data-copy="all">Copy issue</button>
       <button class="btn btn-sm btn-ghost" data-copy="subject">Copy subject line</button>
       <button class="btn btn-sm btn-ghost" data-copy="html">Copy as email HTML</button>
@@ -183,6 +184,40 @@ function show(n) {
     const k = b.dataset.copy;
     TI.copy(k === 'subject' ? i.subject : k === 'html' ? emailHtml(i) : plain(i), b);
   }));
+  TI.$('#edit').addEventListener('click', () => edit(i));
+}
+
+// ----- editing -----
+function edit(i) {
+  const f = (id, label, value, max, hint = '') => `<div class="field"><label for="e_${id}">${label}${hint ? `<span class="hint">${hint}</span>` : ''}</label>
+    <input type="text" id="e_${id}" maxlength="${max}" value="${TI.esc(value || '')}"></div>`;
+  TI.$('#issue').innerHTML = `
+    <h2 style="margin-bottom:.3rem">Edit issue ${i.number}${i.month_label ? ', ' + TI.esc(i.month_label) : ''}</h2>
+    <p class="small muted" style="margin-bottom:1.2rem">Changes save to your project, so copies and downloads use your version.</p>
+    <div id="e_msg" hidden></div>
+    ${f('subject', 'Subject line', i.subject, 150, 'Under 55 characters reads best on phones')}
+    ${f('preview', 'Preview text', i.preview_text, 200, 'The grey line after the subject in most inboxes')}
+    ${f('headline', 'Headline', i.headline, 200)}
+    <div class="field"><label for="e_body">Body <span class="hint">Plain text. Leave a blank line between paragraphs. **bold**, *italic*, and lines starting with - make a list.</span></label>
+      <textarea id="e_body" maxlength="12000" rows="18" style="font-family:var(--read);font-size:1.05rem;line-height:1.6">${TI.esc(i.body)}</textarea></div>
+    ${f('cta', 'Button text', i.cta, 120)}
+    <div class="wiz-nav"><button class="btn btn-ghost" id="e_cancel">Cancel</button><button class="btn" id="e_save">Save changes</button></div>`;
+  TI.$('#e_subject').focus();
+  TI.$('#e_cancel').addEventListener('click', () => show(i.number));
+  TI.$('#e_save').addEventListener('click', async () => {
+    const btn = TI.$('#e_save'); btn.disabled = true; btn.textContent = 'Saving...';
+    const body = { subject: TI.$('#e_subject').value, preview_text: TI.$('#e_preview').value, headline: TI.$('#e_headline').value, body: TI.$('#e_body').value, cta: TI.$('#e_cta').value };
+    try {
+      await TI.api(`submissions/${id}/issues/${i.number}`, { method: 'PUT', body });
+      Object.assign(i, { subject: body.subject.trim(), preview_text: body.preview_text.trim(), headline: body.headline.trim(), body: body.body.trim(), cta: body.cta.trim() });
+      renderDone();
+      show(i.number);
+      TI.showOk(TI.$('#msg'), `Saved your changes to issue ${i.number}.`);
+    } catch (err) {
+      TI.showError(TI.$('#e_msg'), err.message);
+      btn.disabled = false; btn.textContent = 'Save changes';
+    }
+  });
 }
 
 function emailHtml(i) {

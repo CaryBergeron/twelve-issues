@@ -246,6 +246,27 @@ on('GET', 'submissions/:id', async ({ request, env, args }) => {
   return json({ submission: publicSubmission(s), issues });
 });
 
+on('PUT', 'submissions/:id/issues/:n', async ({ request, env, args }) => {
+  const user = await requireUser(env, request);
+  const s = await ownedSubmission(env, user, args.id);
+  const n = Number(args.n);
+  const current = await env.DB.prepare('SELECT subject, preview_text, headline, body, cta FROM issues WHERE submission_id = ? AND number = ?').bind(s.id, n).first();
+  if (!current) return error('That issue does not exist yet.', 404);
+  const b = await readJson(request, 60_000);
+  const next = {
+    subject: str(b.subject, 150), preview_text: str(b.preview_text, 200), headline: str(b.headline, 200),
+    body: str(b.body, 12_000), cta: str(b.cta, 120),
+  };
+  if (!next.subject) return error('Every issue needs a subject line.');
+  if (!next.body) return error('The body of the issue cannot be empty.');
+  const changed = Object.keys(next).filter(k => (current[k] || '') !== next[k]);
+  if (!changed.length) return json({ ok: true, changed: [] });
+  await env.DB.prepare('UPDATE issues SET subject = ?, preview_text = ?, headline = ?, body = ?, cta = ? WHERE submission_id = ? AND number = ?')
+    .bind(next.subject, next.preview_text, next.headline, next.body, next.cta, s.id, n).run();
+  await logEvent(env, 'issue_edited', { userId: user.id, submissionId: s.id, data: { number: n, changed } });
+  return json({ ok: true, changed });
+});
+
 on('POST', 'submissions/:id/checkout', async ({ request, env, args }) => {
   const user = await requireUser(env, request);
   const s = await ownedSubmission(env, user, args.id);
