@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact us | Twelve Issues</title>
+<meta name="description" content="Questions about Twelve Issues, help with a project, or a refund. Send us a note and a real person will answer.">
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/assets/site.css">
+</head>
+<body>
+<header class="top"><div class="wrap top-in">
+  <a class="brand" href="/"><span class="brand-mark">12</span>Twelve Issues</a>
+  <nav class="nav" id="nav"></nav>
+</div></header>
+<main class="page"><div class="wrap contact">
+  <div class="contact-intro">
+    <h1>Write to us</h1>
+    <p class="lede">A real person reads every note, usually within one business day.</p>
+    <dl class="contact-facts">
+      <div><dt>Help with a project</dt><dd>Include the book title so we can find it fast.</dd></div>
+      <div><dt>Refunds</dt><dd>Not happy within 14 days? Ask and we refund in full. No forms, no hoops.</dd></div>
+      <div><dt>Prefer email?</dt><dd><a href="mailto:hello@twelveissues.com">hello@twelveissues.com</a></dd></div>
+    </dl>
+  </div>
+  <div>
+    <form class="panel contact-form" id="contact" novalidate>
+      <div id="msg" hidden></div>
+      <div class="row2">
+        <div class="field"><label for="name">Your name</label><input id="name" type="text" autocomplete="name" maxlength="120" required></div>
+        <div class="field"><label for="email">Email</label><input id="email" type="email" autocomplete="email" maxlength="200" required></div>
+      </div>
+      <div class="field"><label for="topic">What is this about?</label>
+        <select id="topic">
+          <option>A question before I buy</option>
+          <option>Help with my project</option>
+          <option>A refund</option>
+          <option>Partnerships or press</option>
+          <option>Something else</option>
+        </select></div>
+      <div class="field"><label for="book">Book title <span class="hint">Optional, but it helps with project questions</span></label><input id="book" type="text" maxlength="200"></div>
+      <div class="field"><label for="message">Message</label><textarea id="message" maxlength="5000" rows="7" required></textarea></div>
+      <div class="hp" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" type="text" tabindex="-1" autocomplete="off"></div>
+      <button class="btn btn-lg" type="submit" id="send">Send message</button>
+    </form>
+    <div class="panel contact-done" id="done" hidden>
+      <h2>Message sent</h2>
+      <p class="muted">Thanks for writing. We will reply to <strong id="done-email"></strong>, usually within one business day.</p>
+      <a class="btn btn-ghost" href="/">Back to the home page</a>
+    </div>
+  </div>
+</div></main>
+<script src="/assets/app.js"></script>
+<script>
+TI.loadMe().then(u => {
+  TI.renderNav(u);
+  if (u) { TI.$('#email').value = u.email || ''; if (u.name) TI.$('#name').value = u.name; }
+});
+const qs = new URLSearchParams(location.search);
+if (qs.get('topic')) TI.$$('#topic option').forEach(o => { if (o.textContent.toLowerCase().includes(qs.get('topic').toLowerCase())) o.selected = true; });
+TI.$('#contact').addEventListener('submit', async e => {
+  e.preventDefault();
+  const msg = TI.$('#msg'), btn = TI.$('#send');
+  const body = { name: TI.$('#name').value.trim(), email: TI.$('#email').value.trim(), topic: TI.$('#topic').value,
+    book: TI.$('#book').value.trim(), message: TI.$('#message').value.trim(), website: TI.$('#website').value };
+  if (!body.name || !body.email || !body.message) return TI.showError(msg, 'Please add your name, email, and a message.');
+  btn.disabled = true; btn.textContent = 'Sending...';
+  try {
+    await TI.api('contact', { method: 'POST', body });
+    TI.$('#done-email').textContent = body.email;
+    TI.$('#contact').hidden = true; TI.$('#done').hidden = false;
+  } catch (err) {
+    TI.showError(msg, err.message);
+    btn.disabled = false; btn.textContent = 'Send message';
+  }
+});
+TI.track('contact_view');
+</script>
+</body>
+</html>

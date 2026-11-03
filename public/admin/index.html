@@ -21,6 +21,7 @@
   <div class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="projects">Projects</button>
     <button role="tab" aria-selected="false" data-tab="users">Users</button>
+    <button role="tab" aria-selected="false" data-tab="messages">Messages</button>
     <button role="tab" aria-selected="false" data-tab="activity">Activity</button>
     <button role="tab" aria-selected="false" data-tab="exports">Exports</button>
   </div>
@@ -32,6 +33,7 @@
     <div class="table-wrap"><table class="data" id="t-projects"></table></div>
   </section>
   <section data-panel="users" hidden><div class="table-wrap"><table class="data" id="t-users"></table></div></section>
+  <section data-panel="messages" hidden><div class="table-wrap"><table class="data" id="t-messages"></table></div></section>
   <section data-panel="activity" hidden><div class="table-wrap"><table class="data" id="t-events"></table></div></section>
   <section data-panel="exports" hidden>
     <div class="panel">
@@ -57,6 +59,7 @@ let projects = [];
     TI.$$('[data-panel]').forEach(p => (p.hidden = p.dataset.panel !== b.dataset.tab));
     if (b.dataset.tab === 'users') loadUsers();
     if (b.dataset.tab === 'activity') loadEvents();
+    if (b.dataset.tab === 'messages') loadMessages();
   }));
   TI.$('#filter').addEventListener('change', loadProjects);
   TI.$('#scrim').addEventListener('click', closeDrawer);
@@ -111,6 +114,16 @@ async function loadEvents() {
   const { events } = await TI.api('admin/events');
   TI.$('#t-events').innerHTML = `<thead><tr><th>When</th><th>Event</th><th>User</th><th>Details</th></tr></thead><tbody>` +
     events.map(e => `<tr><td>${TI.datetime(e.created_at)}</td><td>${TI.esc(e.type.replace(/_/g, ' '))}</td><td>${TI.esc(e.email || '')}</td><td class="small">${TI.esc(e.data || '')}</td></tr>`).join('') + '</tbody>';
+}
+
+async function loadMessages() {
+  const { messages } = await TI.api('admin/messages');
+  TI.$('#t-messages').innerHTML = `<thead><tr><th>When</th><th>From</th><th>Topic</th><th>Book</th><th>Message</th></tr></thead><tbody>` +
+    (messages.length ? messages.map(m => `<tr><td>${TI.datetime(m.created_at)}</td>
+      <td>${TI.esc(m.name || '')}<br><a class="small" href="mailto:${TI.esc(m.email || '')}?subject=${encodeURIComponent('Re: ' + (m.topic || 'your message'))}">${TI.esc(m.email || '')}</a></td>
+      <td>${TI.esc(m.topic || '')}</td><td>${TI.esc(m.book || '')}</td>
+      <td class="small" style="white-space:pre-wrap;min-width:280px">${TI.esc(m.message || '')}</td></tr>`).join('')
+      : '<tr><td colspan="5" class="muted">No messages yet.</td></tr>') + '</tbody>';
 }
 
 async function openDrawer(id) {

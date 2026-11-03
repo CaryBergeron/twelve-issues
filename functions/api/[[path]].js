@@ -98,6 +98,39 @@ on('POST', 'auth/logout', async ({ request, env }) => {
   return json({ ok: true }, 200, { 'set-cookie': cookie(SESSION_COOKIE, '', { maxAge: 0, secure: isSecure(request) }) });
 });
 
+// ---------- contact form ----------
+on('POST', 'contact', async ({ request, env }) => {
+  const b = await readJson(request, 20_000);
+  if (str(b.website, 200)) return json({ ok: true }); // honeypot: bots fill hidden fields
+  const name = str(b.name, 120), email = str(b.email, 200).toLowerCase(), topic = str(b.topic, 80);
+  const book = str(b.book, 200), message = str(b.message, 5000);
+  if (!name || !message) return error('Please add your name and a message.');
+  if (!EMAIL_RE.test(email)) return error('Please enter a valid email address so we can reply.');
+  const user = await currentUser(env, request);
+  // Light throttle: at most 5 messages per email per hour
+  const recent = await env.DB.prepare(
+    "SELECT COUNT(*) AS n FROM events WHERE type = 'contact_message' AND created_at > datetime('now', '-1 hour') AND json_extract(data, '$.email') = ?")
+    .bind(email).first();
+  if (recent && recent.n >= 5) return error('You have sent several messages in the last hour. We will be in touch soon.', 429);
+  await logEvent(env, 'contact_message', { userId: user?.id, data: { name, email, topic, book, message } });
+  if (env.RESEND_API_KEY && env.ADMIN_EMAILS) {
+    try {
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: { authorization: `Bearer ${env.RESEND_API_KEY}`, 'content-type': 'application/json' },
+        body: JSON.stringify({
+          from: env.FROM_EMAIL || 'Twelve Issues <hello@twelveissues.com>',
+          to: env.ADMIN_EMAILS.split(',').map(e => e.trim()).filter(Boolean),
+          reply_to: email,
+          subject: `Contact: ${topic} from ${name}`,
+          text: `From: ${name} <${email}>\nTopic: ${topic}\nBook: ${book || '(none)'}\nAccount: ${user ? user.email : 'not logged in'}\n\n${message}`,
+        }),
+      });
+    } catch (e) { /* the message is already saved; the email is a bonus */ }
+  }
+  return json({ ok: true });
+});
+
 on('GET', 'auth/me', async ({ request, env }) => {
   const user = await currentUser(env, request);
   return json({ user });
@@ -403,6 +436,13 @@ on('POST', 'admin/submissions/:id/reset', async ({ request, env, args }) => {
   ]);
   await logEvent(env, 'submission_reset', { userId: admin.id, submissionId: s.id });
   return json({ ok: true });
+});
+
+on('GET', 'admin/messages', async ({ request, env }) => {
+  await requireAdmin(env, request);
+  const { results } = await env.DB.prepare(
+    "SELECT id, data, created_at FROM events WHERE type = 'contact_message' ORDER BY id DESC LIMIT 300").all();
+  return json({ messages: results.map(r => ({ id: r.id, created_at: r.created_at, ...safeParse(r.data, {}) })) });
 });
 
 on('GET', 'admin/events', async ({ request, env }) => {

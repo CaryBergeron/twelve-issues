@@ -50,7 +50,7 @@ const TI = (() => {
         <a class="btn btn-sm" href="/app/new.html">New project</a>`;
       $('#logout').addEventListener('click', async e => { e.preventDefault(); await api('auth/logout', { method: 'POST' }); location.href = '/'; });
     } else {
-      nav.innerHTML = `<a href="/#how" class="hide-sm">How it works</a><a href="/#pricing" class="hide-sm">Pricing</a><a href="/login.html">Log in</a><a class="btn btn-sm" href="/signup.html">Get started</a>`;
+      nav.innerHTML = `<a href="/#how" class="hide-sm">How it works</a><a href="/#pricing" class="hide-sm">Pricing</a><a href="/contact.html" class="hide-sm">Contact</a><a href="/login.html">Log in</a><a class="btn btn-sm" href="/signup.html">Get started</a>`;
     }
   }
 
@@ -100,6 +100,49 @@ const TI = (() => {
   function track(type) {
     try { navigator.sendBeacon?.('/api/events', new Blob([JSON.stringify({ type, page: location.pathname, ref: document.referrer })], { type: 'application/json' })); } catch {}
   }
+
+  // Shared footer on every page (skipped in the admin, which has its own chrome)
+  function renderFooter() {
+    if (document.querySelector('footer.foot') || location.pathname.startsWith('/admin')) return;
+    const year = new Date().getFullYear();
+    const f = document.createElement('footer');
+    f.className = 'foot';
+    f.innerHTML = `
+      <div class="wrap foot-grid">
+        <div class="foot-brand">
+          <a class="brand" href="/"><span class="brand-mark">12</span>Twelve Issues</a>
+          <p>One upload. One year of newsletters. Reader emails written from your own book, $12 for all twelve.</p>
+          <a class="btn btn-gold btn-sm" href="/signup.html">Write my 12 issues</a>
+        </div>
+        <nav class="foot-col" aria-label="Product">
+          <h4>Product</h4>
+          <a href="/#how">How it works</a>
+          <a href="/#sample">Sample issue</a>
+          <a href="/#pricing">Pricing</a>
+          <a href="/#faq">Questions</a>
+        </nav>
+        <nav class="foot-col" aria-label="Your account">
+          <h4>Your account</h4>
+          <a href="/signup.html">Create an account</a>
+          <a href="/login.html">Log in</a>
+          <a href="/app/">My projects</a>
+          <a href="/forgot.html">Reset password</a>
+        </nav>
+        <nav class="foot-col" aria-label="Help">
+          <h4>Help</h4>
+          <a href="/contact.html">Contact us</a>
+          <a href="/terms.html#refunds">14-day refund promise</a>
+          <a href="/privacy.html">Privacy</a>
+          <a href="/terms.html">Terms</a>
+        </nav>
+      </div>
+      <div class="wrap foot-base">
+        <span>&copy; ${year} Twelve Issues. Made in Colorado for authors everywhere.</span>
+        <span>Your manuscript is never used to train AI.</span>
+      </div>`;
+    document.body.appendChild(f);
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderFooter); else renderFooter();
 
   return { api, esc, $, $$, money, date, datetime, STATUS, loadMe, requireLogin, renderNav, showError, showOk, md, download, copy, track };
 })();

@@ -15,7 +15,7 @@
 <body>
 <header class="top"><div class="wrap top-in">
   <a class="brand" href="/"><span class="brand-mark">12</span>Twelve Issues</a>
-  <nav class="nav" id="nav"><a href="#how" class="hide-sm">How it works</a><a href="#pricing" class="hide-sm">Pricing</a><a href="/login.html">Log in</a><a class="btn btn-sm" href="/signup.html">Get started</a></nav>
+  <nav class="nav" id="nav"><a href="#how" class="hide-sm">How it works</a><a href="#pricing" class="hide-sm">Pricing</a><a href="/contact.html" class="hide-sm">Contact</a><a href="/login.html">Log in</a><a class="btn btn-sm" href="/signup.html">Get started</a></nav>
 </div></header>
 
 <main>
@@ -31,13 +31,13 @@
       </div>
       <figure class="shelf" aria-labelledby="stack-title">
         <div class="toggle" role="group" aria-label="Choose an example book">
-          <button type="button" data-set="mystery" aria-pressed="true">Mystery</button>
-          <button type="button" data-set="devotional" aria-pressed="false">Devotional</button>
-          <button type="button" data-set="fantasy" aria-pressed="false">Fantasy</button>
-          <button type="button" data-set="memoir" aria-pressed="false">Memoir</button>
+          <button type="button" data-set="romance" aria-pressed="true">Romance</button>
+          <button type="button" data-set="mystery" aria-pressed="false">Mystery</button>
+          <button type="button" data-set="scifi" aria-pressed="false">Sci-Fi</button>
+          <button type="button" data-set="nonfiction" aria-pressed="false">Non-Fiction</button>
         </div>
         <ol class="stack" id="stack"></ol>
-        <figcaption id="stack-title">A year of subject lines from a cozy mystery novel</figcaption>
+        <figcaption id="stack-title">A year of subject lines from a small-town romance</figcaption>
       </figure>
     </div>
   </section>
@@ -63,25 +63,25 @@
     </div>
   </section>
 
-  <section class="band band-alt">
+  <section class="band band-alt" id="sample">
     <div class="wrap sample">
       <div>
         <h2>Real letters, not filler</h2>
         <p class="muted">Each issue comes with a subject line written to be opened, preview text, a headline, 350 to 550 words, and one clear link to your book.</p>
         <p class="muted">Everything is drawn from your pages, so it sounds like you and the facts stay true to your story.</p>
-        <p class="muted">Here is January from the mystery example above.</p>
+        <p class="muted">Here is January from the romance example above.</p>
       </div>
       <article class="letter" aria-label="Sample newsletter">
         <dl class="letter-meta">
-          <div><dt>Subject</dt><dd>The real lighthouse behind chapter one</dd></div>
-          <div><dt>Preview</dt><dd>I almost set the whole book somewhere else.</dd></div>
+          <div><dt>Subject</dt><dd>The first line I wrote for Nora and Jake</dd></div>
+          <div><dt>Preview</dt><dd>It started on a diner napkin at the lake.</dd></div>
         </dl>
         <div class="letter-body">
-          <h3>The lighthouse came first</h3>
-          <p>Before Maggie, before the missing harbormaster, before any of it, there was a lighthouse I passed on a foggy drive up the coast. The keeper's cottage had one lit window and no road leading to it.</p>
-          <p>I pulled over and wrote three lines on the back of a gas receipt. Those three lines became the opening of chapter one.</p>
-          <p>If you have read it, you know why that window matters. If you have not, the fog is waiting.</p>
-          <p><span class="cta-line">Read Fog Over Port Haven</span></p>
+          <h3>It started with a porch light</h3>
+          <p>Before I knew their names, I had one sentence: she left the porch light on for six years. I wrote it on a diner napkin at the lake and carried it in my coat pocket all summer.</p>
+          <p>That light became Nora’s whole story. Jake is the one who finally noticed it.</p>
+          <p>If you have read Porch Light Season, you know what happens when he climbs those steps. If you have not, the light is still on.</p>
+          <p><span class="cta-line">Read Porch Light Season</span></p>
         </div>
       </article>
     </div>
@@ -107,7 +107,7 @@
     </div>
   </section>
 
-  <section class="band band-alt">
+  <section class="band band-alt" id="faq">
     <div class="narrow faq">
       <h2>Questions authors ask</h2>
       <details><summary>Will it spoil my plot?</summary><p>No. We plan around your major twists and endings and write the way you would talk to readers who have not finished yet. Tell us anything that is off limits and we will leave it out.</p></details>
@@ -127,34 +127,29 @@
   </section>
 </main>
 
-<footer class="foot"><div class="wrap foot-in">
-  <span>Twelve Issues. One upload. One year of newsletters.</span>
-  <span><a href="/privacy.html">Privacy</a> &nbsp; <a href="/terms.html">Terms</a> &nbsp; <a href="mailto:hello@twelveissues.com">hello@twelveissues.com</a></span>
-</div></footer>
-
 <script src="/assets/app.js"></script>
 <script>
   const SETS = {
+    romance: { title: 'A year of subject lines from a small-town romance', months: [
+      'The first line I wrote for Nora and Jake', 'A Valentine scene I cut', 'Why I believe in second chances',
+      'Jake\u2019s side of the porch swing', 'You asked: will there be a wedding?', 'The lake house that started it all',
+      'A summer list for hopeless romantics', 'Nora\u2019s lemonade from chapter six', 'Meet the sister who gets book two',
+      'Book two: the first chapter', 'A cozy holiday short story', 'A gift for the romance reader you love'] },
     mystery: { title: 'A year of subject lines from a cozy mystery novel', months: [
       'The real lighthouse behind chapter one', 'A love letter Maggie never sent', 'Five clues most readers missed',
       'Why I almost cut the harbor scene', 'You asked, I answered', 'A summer list for mystery lovers',
       'The blueberry pie from chapter nine', 'A map of Port Haven', 'The deleted scene, finally',
       'Fog season and the night on the pier', 'A short story to say thank you', 'A gift for the mystery fan you love'] },
-    devotional: { title: 'A year of subject lines from a morning devotional', months: [
-      'The verse that started this book', 'Love that keeps no score', 'Five minutes before the house wakes up',
-      'An Easter morning reading', 'A prayer for mothers', 'What if I miss a day?',
-      'Rest is not laziness', 'A back-to-school blessing', 'Why I wrote chapter seven',
-      'When the leaves let go', 'A gratitude list for your week', 'An unhurried Advent'] },
-    fantasy: { title: 'A year of subject lines from an epic fantasy series', months: [
-      'The map I drew on a napkin', 'Meet the villain’s mother', 'How the salt magic works',
-      'A scene from Kael’s side', 'The songs the sailors sing', 'Book two: the first page',
-      'The chapter I cut', 'Forging the crown', 'Preorder day is here',
-      'The haunted keep at Dunmarrow', 'Thank you, and a signed copy', 'Gifts for the fantasy reader'] },
-    memoir: { title: 'A year of subject lines from a farm memoir', months: [
-      'The seed catalog on Grandpa’s table', 'A letter I found in the barn', 'What mud season taught me',
-      'The first calf of spring', 'Questions you asked me', 'Grandma’s rhubarb pie',
-      'Haying with my kids', 'The county fair chapter', 'The hardest page to write',
-      'The tractor that would not quit', 'Gratitude at the long table', 'A book for the farmer in your life'] },
+    scifi: { title: 'A year of subject lines from a space opera series', months: [
+      'The star chart behind chapter one', 'How faster-than-light works in my universe', 'Meet Wren, the ship\u2019s AI',
+      'The real science I bent (a little)', 'You asked about that ending', 'A summer list for stargazers',
+      'A scene from the engine room', 'Inside the Corvane rebellion', 'The planet I deleted',
+      'Book two: the first page', 'A short story from the outer ring', 'Gifts for the sci-fi reader'] },
+    nonfiction: { title: 'A year of subject lines from a backyard gardening guide', months: [
+      'Plan your garden on paper first', 'Seeds to start indoors this month', 'The soil test that saves a season',
+      'Five mistakes from my first spring', 'You asked: how much sun is enough?', 'Water less, grow more',
+      'When the squash bugs show up', 'Saving seeds for next year', 'The fall crops nobody plants',
+      'Putting the garden to bed', 'A gratitude list from the garden', 'A gift for the gardener in your life'] },
   };
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const OFFSETS = [6, 22, 0, 14, 30, 4, 18, 10, 26, 2, 16, 8];
@@ -169,7 +164,7 @@
     document.querySelectorAll('.toggle button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.set === key)));
   }
   document.querySelectorAll('.toggle button').forEach(b => b.addEventListener('click', () => show(b.dataset.set, true)));
-  show('mystery', true);
+  show('romance', true);
   TI.loadMe().then(u => u && TI.renderNav(u));
   TI.track('landing_view');
 </script>
