@@ -39,7 +39,7 @@ CREATE TABLE IF NOT EXISTS submissions (
   questionnaire TEXT,                          -- JSON
   settings TEXT,                               -- JSON: tone, cadence, cta_url, audience
   status TEXT NOT NULL DEFAULT 'awaiting_payment', -- awaiting_payment | paid | generating | complete | failed
-  price_cents INTEGER NOT NULL DEFAULT 900,
+  price_cents INTEGER NOT NULL DEFAULT 1200,
   stripe_session_id TEXT,
   paid_at TEXT,
   comped INTEGER NOT NULL DEFAULT 0,

@@ -3,13 +3,13 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Twelve Issues: One upload. One year of newsletters</title>
-<meta name="description" content="Upload your book or your business content. Twelve Issues writes 12 thoughtful, ready-to-send newsletters from it. $9 introductory price.">
+<title>Twelve Issues: One upload. One year of newsletters for authors</title>
+<meta name="description" content="Upload your book and get 12 ready-to-send reader newsletters drawn from your own pages. $12 for all twelve. A dollar an issue.">
 <meta property="og:title" content="Twelve Issues: One upload. One year of newsletters">
-<meta property="og:description" content="Upload your book or your business content and get 12 ready-to-send newsletters.">
+<meta property="og:description" content="Upload your book. Get 12 reader newsletters pulled from your own pages. $12, a dollar an issue.">
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,550;12..96,650;12..96,800&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/site.css">
 </head>
 <body>
@@ -21,76 +21,67 @@
 <main>
   <section class="hero">
     <div class="wrap hero-grid">
-      <div>
+      <div class="hero-copy">
         <h1>One upload. One year of newsletters.</h1>
-        <p class="lede">Give us your book, your brochure, your blog posts, or a few answers about your business. We plan and write 12 newsletters your readers will actually open, one for every month.</p>
+        <p class="lede">Upload your book and get 12 reader newsletters pulled from your own pages: the story behind the story, characters up close, the research that did not fit, and a friendly reminder to buy.</p>
         <div class="hero-actions">
           <a class="btn btn-lg" href="/signup.html">Write my 12 issues</a>
-          <span class="price-note"><strong>$9</strong> introductory price per project</span>
+          <span class="price-note"><strong>$12</strong> for all twelve. A dollar an issue.</span>
         </div>
       </div>
-      <div class="year airmail" aria-label="Example: a year of newsletter subject lines">
-        <div class="year-in">
-          <div class="year-head">
-            <p id="year-title">From a small-town mystery novel</p>
-            <div class="toggle" role="group" aria-label="Choose an example">
-              <button type="button" data-set="novel" aria-pressed="true">A novel</button>
-              <button type="button" data-set="plumber" aria-pressed="false">A plumbing company</button>
-            </div>
-          </div>
-          <div class="months" id="months"></div>
+      <figure class="shelf" aria-labelledby="stack-title">
+        <div class="toggle" role="group" aria-label="Choose an example book">
+          <button type="button" data-set="mystery" aria-pressed="true">Mystery</button>
+          <button type="button" data-set="devotional" aria-pressed="false">Devotional</button>
+          <button type="button" data-set="fantasy" aria-pressed="false">Fantasy</button>
+          <button type="button" data-set="memoir" aria-pressed="false">Memoir</button>
         </div>
+        <ol class="stack" id="stack"></ol>
+        <figcaption id="stack-title">A year of subject lines from a cozy mystery novel</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section class="band band-alt">
+    <div class="wrap split">
+      <h2>Your readers forget you between books. A monthly email fixes that.</h2>
+      <div class="split-body">
+        <p>Every author hears it: build your list, email your readers. The hard part is month four, when you have nothing new to announce and a blank draft staring back.</p>
+        <p>Your book already holds a year of material. Twelve Issues finds it, plans it so nothing repeats, and writes every issue in your voice. You copy, paste, and send.</p>
       </div>
     </div>
   </section>
 
-  <section class="band band-alt" id="how">
+  <section class="band" id="how">
     <div class="wrap">
       <h2>How it works</h2>
-      <div class="steps">
-        <div class="step"><h3>Share what you have</h3><p>Upload a manuscript or company documents (PDF, Word, EPUB, or text), answer a short questionnaire, or both.</p></div>
-        <div class="step"><h3>We plan the year</h3><p>Twelve Issues reads everything, picks the best stories and facts, and maps one clear idea to each month so nothing repeats.</p></div>
-        <div class="step"><h3>Send them out</h3><p>Copy each issue into Mailchimp, Kit, or any email tool, or download all 12 at once. Edit anything you like.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section class="band">
-    <div class="wrap">
-      <h2>Made for people with something to say and no time to say it</h2>
-      <div class="who">
-        <div class="who-col">
-          <h3>Authors</h3>
-          <p class="muted">Keep readers close between releases without spoiling the plot.</p>
-          <ul><li>Behind-the-scenes stories and research</li><li>Character spotlights and reader questions</li><li>Seasonal tie-ins and gentle buy-the-book reminders</li></ul>
-        </div>
-        <div class="who-col">
-          <h3>Local and small businesses</h3>
-          <p class="muted">Stay top of mind with customers in a voice that sounds like you.</p>
-          <ul><li>Seasonal tips your customers need that month</li><li>Myth-busting, checklists, and team spotlights</li><li>A clear offer or booking link in every issue</li></ul>
-        </div>
-      </div>
+      <ol class="steps">
+        <li><h3>Upload your book</h3><p>PDF, Word, EPUB, or plain text. Answer a few optional questions about your readers and where to buy.</p></li>
+        <li><h3>We plan the year</h3><p>We read the whole book, choose twelve angles worth writing about, and match them to the season. No spoilers for the big twists.</p></li>
+        <li><h3>Send one a month</h3><p>Copy each issue into Mailchimp, Kit, MailerLite, or Substack, or download all twelve at once. Edit anything.</p></li>
+      </ol>
     </div>
   </section>
 
   <section class="band band-alt">
     <div class="wrap sample">
       <div>
-        <h2>Real issues, not filler</h2>
-        <p class="muted">Every issue has a subject line built to be opened, a preview line, a headline, 350 to 550 words of useful writing, and one clear call to action. Everything comes from your material, so it sounds like you and stays accurate.</p>
-        <p class="muted">Here is January for the plumbing company in the example above.</p>
+        <h2>Real letters, not filler</h2>
+        <p class="muted">Each issue comes with a subject line written to be opened, preview text, a headline, 350 to 550 words, and one clear link to your book.</p>
+        <p class="muted">Everything is drawn from your pages, so it sounds like you and the facts stay true to your story.</p>
+        <p class="muted">Here is January from the mystery example above.</p>
       </div>
       <article class="letter" aria-label="Sample newsletter">
         <dl class="letter-meta">
-          <div><dt>Subject</dt><dd>The 3 pipes that freeze first</dd></div>
-          <div><dt>Preview</dt><dd>Two minutes now can save you a flooded basement.</dd></div>
+          <div><dt>Subject</dt><dd>The real lighthouse behind chapter one</dd></div>
+          <div><dt>Preview</dt><dd>I almost set the whole book somewhere else.</dd></div>
         </dl>
         <div class="letter-body">
-          <h3>Before the next cold snap, check these three spots</h3>
-          <p>Every January we get the same call: a pipe split overnight, and water is coming through the ceiling. Almost every time, it is one of three places.</p>
-          <p>The first is the hose bib on the north side of the house. The second is any pipe running along an outside wall in the garage. The third is the line under the kitchen sink when the cabinet doors stay closed.</p>
-          <p>Open those cabinet doors on cold nights, disconnect garden hoses, and know where your main shutoff is.</p>
-          <p><span class="cta-line">Book a winter pipe check</span></p>
+          <h3>The lighthouse came first</h3>
+          <p>Before Maggie, before the missing harbormaster, before any of it, there was a lighthouse I passed on a foggy drive up the coast. The keeper's cottage had one lit window and no road leading to it.</p>
+          <p>I pulled over and wrote three lines on the back of a gas receipt. Those three lines became the opening of chapter one.</p>
+          <p>If you have read it, you know why that window matters. If you have not, the fog is waiting.</p>
+          <p><span class="cta-line">Read Fog Over Port Haven</span></p>
         </div>
       </article>
     </div>
@@ -99,33 +90,39 @@
   <section class="band" id="pricing">
     <div class="wrap offer">
       <div>
-        <h2>One price, one year of content</h2>
-        <p class="muted">A project is one book or one set of business content. You get all 12 issues, yours to keep, edit, and send as often as you like. Most projects are written in about 10 minutes.</p>
-        <p class="muted">Not happy with your issues? Email us within 14 days for a full refund.</p>
+        <h2>Twelve issues. Twelve dollars.</h2>
+        <p class="muted">One book, one year of reader emails, one dollar each. That is less than a paperback, and your issues are yours to keep, edit, and resend.</p>
+        <p class="muted">Most books are finished in about ten minutes. Not happy? Email us within 14 days for a full refund.</p>
       </div>
-      <div class="ticket airmail">
-        <div class="ticket-in">
-          <div class="amount"><sup>$</sup>9</div>
-          <p class="muted">per project, introductory price</p>
-          <ul>
-            <li>12 complete newsletters</li>
-            <li>Subject lines, preview text, and calls to action</li>
-            <li>Copy, or download as Markdown or email-ready HTML</li>
-          </ul>
-          <a class="btn btn-red btn-lg" href="/signup.html">Start my project</a>
-        </div>
+      <div class="ticket">
+        <div class="amount"><sup>$</sup>12</div>
+        <p class="muted">per book, all twelve issues</p>
+        <ul>
+          <li>12 complete reader newsletters</li>
+          <li>Subject lines, preview text, and buy links</li>
+          <li>Copy, or download as Markdown or email-ready HTML</li>
+        </ul>
+        <a class="btn btn-gold btn-lg" href="/signup.html">Start with my book</a>
       </div>
     </div>
   </section>
 
   <section class="band band-alt">
     <div class="narrow faq">
-      <h2>Questions</h2>
-      <details><summary>What can I upload?</summary><p>PDF, Word (DOCX), EPUB, or plain text, up to several files at once. Authors usually upload a manuscript. Businesses often upload a services page, a brochure, past blog posts, or FAQs. No document? Answer the questionnaire instead.</p></details>
+      <h2>Questions authors ask</h2>
+      <details><summary>Will it spoil my plot?</summary><p>No. We plan around your major twists and endings and write the way you would talk to readers who have not finished yet. Tell us anything that is off limits and we will leave it out.</p></details>
+      <details><summary>Does it work for nonfiction?</summary><p>Yes. Devotionals, how-to, history, memoir, and business books all work well. Nonfiction issues lean on key ideas, stories, and practical takeaways from the book.</p></details>
+      <details><summary>I write a series. Can it mention my other books?</summary><p>Yes. List them when you set up your project and the issues will point readers to the rest of the series at natural moments.</p></details>
       <details><summary>Is my manuscript safe?</summary><p>Your files are read in your own browser and only the text is sent to us. We use it to write your issues and nothing else. It is never used to train AI models, and we delete it on request.</p></details>
-      <details><summary>Which email service does it work with?</summary><p>All of them. Copy an issue into Mailchimp, Kit, Constant Contact, Substack, or plain Gmail, or download every issue as Markdown or email-ready HTML.</p></details>
-      <details><summary>Can I edit the issues?</summary><p>Yes. They are plain text you own. Change anything, add photos, and send them on your own schedule.</p></details>
-      <details><summary>Do I have to send them monthly?</summary><p>Monthly is the default, and issues are tied to the season. You can choose weekly or every two weeks instead when you set up your project.</p></details>
+      <details><summary>Which email service does it work with?</summary><p>All of them. Copy an issue into Mailchimp, Kit, MailerLite, Substack, or plain Gmail, or download every issue as Markdown or email-ready HTML.</p></details>
+      <details><summary>Do I have to send them monthly?</summary><p>Monthly is the default, and issues are tied to the season. You can choose weekly or every two weeks when you set up your book.</p></details>
+    </div>
+  </section>
+
+  <section class="closer">
+    <div class="wrap closer-in">
+      <h2>Your book already has a year of newsletters in it.</h2>
+      <a class="btn btn-gold btn-lg" href="/signup.html">Write my 12 issues</a>
     </div>
   </section>
 </main>
@@ -138,28 +135,41 @@
 <script src="/assets/app.js"></script>
 <script>
   const SETS = {
-    novel: { title: 'From a small-town mystery novel', months: [
-      ['January', 'The real lighthouse behind chapter one'], ['February', 'A love letter Maggie never sent'], ['March', 'Five clues most readers missed'],
-      ['April', 'Why I almost cut the harbor scene'], ['May', 'You asked, I answered'], ['June', 'A summer list for mystery lovers'],
-      ['July', 'The blueberry pie from chapter nine'], ['August', 'A map of Port Haven'], ['September', 'The deleted scene, finally'],
-      ['October', 'Fog season and the night on the pier'], ['November', 'A short story to say thank you'], ['December', 'A gift for the mystery fan you love']] },
-    plumber: { title: 'From a family plumbing company', months: [
-      ['January', 'The 3 pipes that freeze first'], ['February', 'Why your water bill jumped'], ['March', 'Ten minutes under the sink'],
-      ['April', 'Myth or fact: store-bought drain cleaner'], ['May', 'Meet Dave, 22 years on the truck'], ['June', 'Sprinklers, hoses, and summer leaks'],
-      ['July', 'Your vacation shutoff checklist'], ['August', 'How long should a water heater last?'], ['September', 'Before you call us: a quick guide'],
-      ['October', 'Get ready for the first freeze'], ['November', 'Hosting Thanksgiving without a clog'], ['December', 'Thank you, and a holiday tune-up']] },
+    mystery: { title: 'A year of subject lines from a cozy mystery novel', months: [
+      'The real lighthouse behind chapter one', 'A love letter Maggie never sent', 'Five clues most readers missed',
+      'Why I almost cut the harbor scene', 'You asked, I answered', 'A summer list for mystery lovers',
+      'The blueberry pie from chapter nine', 'A map of Port Haven', 'The deleted scene, finally',
+      'Fog season and the night on the pier', 'A short story to say thank you', 'A gift for the mystery fan you love'] },
+    devotional: { title: 'A year of subject lines from a morning devotional', months: [
+      'The verse that started this book', 'Love that keeps no score', 'Five minutes before the house wakes up',
+      'An Easter morning reading', 'A prayer for mothers', 'What if I miss a day?',
+      'Rest is not laziness', 'A back-to-school blessing', 'Why I wrote chapter seven',
+      'When the leaves let go', 'A gratitude list for your week', 'An unhurried Advent'] },
+    fantasy: { title: 'A year of subject lines from an epic fantasy series', months: [
+      'The map I drew on a napkin', 'Meet the villain’s mother', 'How the salt magic works',
+      'A scene from Kael’s side', 'The songs the sailors sing', 'Book two: the first page',
+      'The chapter I cut', 'Forging the crown', 'Preorder day is here',
+      'The haunted keep at Dunmarrow', 'Thank you, and a signed copy', 'Gifts for the fantasy reader'] },
+    memoir: { title: 'A year of subject lines from a farm memoir', months: [
+      'The seed catalog on Grandpa’s table', 'A letter I found in the barn', 'What mud season taught me',
+      'The first calf of spring', 'Questions you asked me', 'Grandma’s rhubarb pie',
+      'Haying with my kids', 'The county fair chapter', 'The hardest page to write',
+      'The tractor that would not quit', 'Gratitude at the long table', 'A book for the farmer in your life'] },
   };
-  const monthsEl = document.getElementById('months');
+  const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const OFFSETS = [6, 22, 0, 14, 30, 4, 18, 10, 26, 2, 16, 8];
+  const stack = document.getElementById('stack');
   function show(key, animate) {
     const set = SETS[key];
-    document.getElementById('year-title').textContent = set.title;
-    monthsEl.classList.remove('swap');
-    monthsEl.innerHTML = set.months.map(([m, s], i) => `<div class="month" style="--i:${i}"><b>${m}</b><span>${TI.esc(s)}</span></div>`).join('');
-    if (animate) { void monthsEl.offsetWidth; monthsEl.classList.add('swap'); }
+    document.getElementById('stack-title').textContent = set.title;
+    stack.classList.remove('restack');
+    stack.innerHTML = set.months.map((s, i) =>
+      `<li class="book b${i % 6}" style="--i:${i};--x:${OFFSETS[i]}px"><b>${MONTHS[i]}</b><span>${TI.esc(s)}</span></li>`).join('');
+    if (animate) { void stack.offsetWidth; stack.classList.add('restack'); }
     document.querySelectorAll('.toggle button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.set === key)));
   }
   document.querySelectorAll('.toggle button').forEach(b => b.addEventListener('click', () => show(b.dataset.set, true)));
-  show('novel', false);
+  show('mystery', true);
   TI.loadMe().then(u => u && TI.renderNav(u));
   TI.track('landing_view');
 </script>

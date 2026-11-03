@@ -6,7 +6,7 @@
 <title>New project | Twelve Issues</title>
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,550;12..96,650;12..96,800&family=Newsreader:opsz,wght@6..72,400;6..72,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/assets/site.css">
 <script src="/assets/extract.js"></script>
 </head>
@@ -20,13 +20,10 @@
   <div id="msg" hidden></div>
 
   <section data-step="1">
-    <h1>What are we writing about?</h1>
-    <p class="muted">Pick the one that fits. Both get 12 newsletters.</p>
-    <div class="choice-grid" role="radiogroup" aria-label="Project type">
-      <label class="choice"><input type="radio" name="kind" value="author" checked><strong>A book</strong><span class="muted">Novels, nonfiction, memoir, devotionals. Keep readers engaged and sell more copies.</span></label>
-      <label class="choice"><input type="radio" name="kind" value="business"><strong>A business</strong><span class="muted">Plumbers, dentists, shops, coaches, nonprofits. Stay top of mind with customers.</span></label>
-    </div>
-    <div class="field" style="margin-top:1.4rem"><label for="title" id="title-label">Book title</label><input id="title" type="text" maxlength="200" required></div>
+    <h1>Which book are we writing about?</h1>
+    <p class="muted">One book makes one project and twelve newsletters.</p>
+    <input type="radio" name="kind" value="author" checked hidden>
+    <div class="field" style="margin-top:1.4rem"><label for="title" id="title-label">Book title <span class="hint">As readers know it</span></label><input id="title" type="text" maxlength="200" required></div>
     <div class="wiz-nav"><span></span><button class="btn" data-next>Continue</button></div>
   </section>
 
@@ -71,7 +68,7 @@
     <h1>Review and start</h1>
     <div class="panel"><table class="summary-table" id="summary"></table></div>
     <div class="panel" style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
-      <div><strong style="font-size:1.4rem" id="price">$9</strong> <span class="muted">for all 12 issues</span><br><span class="small muted">Secure checkout by Stripe. Full refund within 14 days if you are not happy.</span></div>
+      <div><strong style="font-size:1.4rem" id="price">$12</strong> <span class="muted">for all 12 issues</span><br><span class="small muted">Secure checkout by Stripe. Full refund within 14 days if you are not happy.</span></div>
       <button class="btn btn-red btn-lg" id="pay">Pay and write my issues</button>
     </div>
     <div class="wiz-nav"><button class="btn btn-ghost" data-back>Back</button><span></span></div>
@@ -102,7 +99,7 @@ const Q = {
 };
 const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const state = { step: 1, files: [], answers: {} };
-let config = { price_cents: 900 };
+let config = { price_cents: 1200 };
 
 (async () => {
   await TI.requireLogin();
@@ -120,7 +117,7 @@ let config = { price_cents: 900 };
 const kind = () => TI.$('input[name=kind]:checked').value;
 function renderKind() {
   const k = kind();
-  TI.$('#title-label').textContent = k === 'author' ? 'Book title' : 'Business name';
+  TI.$('#title-label').firstChild.textContent = k === 'author' ? 'Book title ' : 'Business name ';
   TI.$('#cta-hint').textContent = k === 'author' ? 'Where to buy the book' : 'Your booking page or website';
   TI.$('#drop-hint').textContent = k === 'author'
     ? 'Your manuscript as PDF, Word, EPUB, or text. It is read in your browser.'

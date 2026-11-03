@@ -45,7 +45,7 @@ function isSecure(request) { return new URL(request.url).protocol === 'https:'; 
 
 // ---------- public config ----------
 on('GET', 'config', async ({ env }) => json({
-  price_cents: Number(env.PRICE_CENTS || 900),
+  price_cents: Number(env.PRICE_CENTS || 1200),
   payments_ready: !!env.STRIPE_SECRET_KEY || env.MOCK_PAYMENTS === '1',
   mock_payments: env.MOCK_PAYMENTS === '1',
   password_reset_email: !!env.RESEND_API_KEY,
@@ -196,7 +196,7 @@ on('POST', 'submissions', async ({ request, env }) => {
   };
   const files = (Array.isArray(b.source_files) ? b.source_files : []).slice(0, 20).map(f => ({ name: str(f.name, 200), chars: Number(f.chars) || 0 }));
   const id = uid('s_');
-  const price = Number(env.PRICE_CENTS || 900);
+  const price = Number(env.PRICE_CENTS || 1200);
   await env.DB.prepare(`INSERT INTO submissions (id, user_id, kind, title, source_files, source_text, source_chars, questionnaire, settings, price_cents)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
     .bind(id, user.id, kind, title, JSON.stringify(files), sourceText, sourceText.length, JSON.stringify(q), JSON.stringify(settings), price).run();

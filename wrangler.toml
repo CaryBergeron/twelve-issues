@@ -9,7 +9,7 @@ database_id = "626bfa37-b235-4322-9fd5-3966124d3277"
 
 [vars]
 APP_URL = "https://twelveissues.com"
-PRICE_CENTS = "900"
+PRICE_CENTS = "1200"
 AI_MODEL = "claude-sonnet-5-5"
 
 # Secrets are set in the Cloudflare dashboard, never in this file:
