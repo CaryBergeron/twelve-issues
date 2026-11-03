@@ -261,6 +261,12 @@ input:focus, select:focus, textarea:focus { border-color: var(--blue); outline: 
 .stars button.on { color: var(--gold); }
 
 /* Admin */
+.health-list { list-style: none; padding: 0; margin: 1rem 0 0; display: grid; gap: .55rem; }
+.health-list li { display: flex; gap: .7rem; align-items: flex-start; font-size: .95rem; }
+.health-list .mark { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: .8rem; color: #fff; margin-top: 1px; }
+.health-list li.ok .mark { background: var(--ok); }
+.health-list li.bad .mark { background: var(--red); }
+.health-list li.opt .mark { background: #9aa79f; }
 .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-bottom: 1.6rem; }
 .stat { border: 1px solid var(--rule); border-radius: var(--r-md); padding: 16px; }
 .stat span { display: block; color: var(--ink-soft); font-size: .86rem; }

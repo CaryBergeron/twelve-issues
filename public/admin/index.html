@@ -17,6 +17,13 @@
 <main class="page"><div class="wrap">
   <div class="page-head"><h1>Admin</h1><span class="small muted" id="updated"></span></div>
   <div id="msg" hidden></div>
+  <section class="panel health" id="health">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+      <h3 style="margin:0">Setup check</h3>
+      <button class="btn btn-sm btn-ghost" id="health-run">Check again</button>
+    </div>
+    <ul class="health-list" id="health-list"><li class="muted">Checking keys...</li></ul>
+  </section>
   <div class="stats" id="stats"></div>
   <div class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="projects">Projects</button>
@@ -64,10 +71,21 @@ let projects = [];
   TI.$('#filter').addEventListener('change', loadProjects);
   TI.$('#scrim').addEventListener('click', closeDrawer);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
-  await Promise.all([loadStats(), loadProjects()]);
+  TI.$('#health-run').addEventListener('click', loadHealth);
+  await Promise.all([loadHealth(), loadStats(), loadProjects()]);
 })();
 
 const n = v => Number(v || 0).toLocaleString();
+async function loadHealth() {
+  const ul = TI.$('#health-list');
+  ul.innerHTML = '<li class="muted">Checking keys...</li>';
+  try {
+    const { checks } = await TI.api('admin/health');
+    ul.innerHTML = checks.map(c => `<li class="${c.ok ? 'ok' : c.optional ? 'opt' : 'bad'}"><span class="mark" aria-hidden="true">${c.ok ? '&#10003;' : c.optional ? '&ndash;' : '&#10007;'}</span>
+      <span><strong>${TI.esc(c.name)}</strong> <span class="muted">${TI.esc(c.detail)}</span>${!c.ok && c.fix ? `<br><span class="small">${TI.esc(c.fix)}</span>` : ''}</span></li>`).join('');
+  } catch (e) { ul.innerHTML = `<li class="bad">${TI.esc(e.message)}</li>`; }
+}
+
 async function loadStats() {
   try {
     const s = await TI.api('admin/stats');

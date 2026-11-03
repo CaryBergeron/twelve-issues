@@ -466,6 +466,66 @@ on('GET', 'admin/messages', async ({ request, env }) => {
   return json({ messages: results.map(r => ({ id: r.id, created_at: r.created_at, ...safeParse(r.data, {}) })) });
 });
 
+// ---------- admin setup check: verifies every key without exposing it ----------
+on('GET', 'admin/health', async ({ request, env }) => {
+  await requireAdmin(env, request);
+  const checks = [];
+  const add = (name, ok, detail, fix = '', optional = false) => checks.push({ name, ok, detail, fix, optional });
+  const WEBHOOK_URL = 'https://twelveissues.com/api/stripe/webhook';
+  const NEEDED = ['checkout.session.completed', 'checkout.session.async_payment_succeeded', 'charge.refunded'];
+
+  add('Admin emails', !!env.ADMIN_EMAILS, env.ADMIN_EMAILS ? `${env.ADMIN_EMAILS.split(',').length} admin address(es)` : 'Not set', 'Add ADMIN_EMAILS in Cloudflare');
+
+  // Stripe secret key
+  const sk = env.STRIPE_SECRET_KEY || '';
+  if (!sk) add('Stripe secret key', false, 'Not set', 'Add STRIPE_SECRET_KEY in Cloudflare, then redeploy');
+  else if (!/^sk_(test|live)_/.test(sk)) add('Stripe secret key', false, `Starts with "${sk.slice(0, 8)}", expected sk_test_ or sk_live_`, 'Use the Secret key, not the publishable (pk_) or restricted (rk_) key');
+  else {
+    const mode = sk.startsWith('sk_live_') ? 'live' : 'test (sandbox)';
+    try {
+      const r = await fetch('https://api.stripe.com/v1/balance', { headers: { authorization: `Bearer ${sk}` } });
+      add('Stripe secret key', r.ok, r.ok ? `Valid, ${mode} mode` : `Stripe rejected it (HTTP ${r.status})`, r.ok ? '' : 'Re-copy the secret key from Stripe');
+      if (r.ok) {
+        const w = await fetch('https://api.stripe.com/v1/webhook_endpoints?limit=100', { headers: { authorization: `Bearer ${sk}` } });
+        const list = w.ok ? (await w.json()).data || [] : [];
+        const ep = list.find(e => (e.url || '').replace(/\/$/, '') === WEBHOOK_URL);
+        if (!ep) add('Stripe webhook endpoint', false, `No webhook found for ${WEBHOOK_URL} in ${mode} mode`, 'Create the event destination in the same Stripe mode as your key');
+        else {
+          const ev = ep.enabled_events || [];
+          const missing = ev.includes('*') ? [] : NEEDED.filter(x => !ev.includes(x));
+          const okEp = ep.status === 'enabled' && !missing.length;
+          add('Stripe webhook endpoint', okEp, okEp ? 'Found, enabled, all 3 events selected' : (ep.status !== 'enabled' ? `Endpoint is ${ep.status}` : `Missing events: ${missing.join(', ')}`), okEp ? '' : 'Edit the event destination in Stripe');
+        }
+      }
+    } catch (e) { add('Stripe secret key', false, 'Could not reach Stripe', 'Try again in a minute'); }
+  }
+
+  // Webhook signing secret
+  const wh = env.STRIPE_WEBHOOK_SECRET || '';
+  add('Stripe webhook signing secret', /^whsec_/.test(wh), wh ? (/^whsec_/.test(wh) ? 'Set, correct format' : `Starts with "${wh.slice(0, 6)}", expected whsec_`) : 'Not set',
+    'Copy the signing secret (whsec_) from the event destination page into STRIPE_WEBHOOK_SECRET');
+
+  // Anthropic key and model
+  const ak = env.ANTHROPIC_API_KEY || '';
+  if (!ak) add('Anthropic API key', false, 'Not set', 'Add ANTHROPIC_API_KEY in Cloudflare, then redeploy');
+  else {
+    try {
+      const r = await fetch('https://api.anthropic.com/v1/models?limit=100', { headers: { 'x-api-key': ak, 'anthropic-version': '2023-06-01' } });
+      add('Anthropic API key', r.ok, r.ok ? 'Valid' : `Anthropic rejected it (HTTP ${r.status})`, r.ok ? '' : 'Re-copy the key from the Console (Twelve Issues workspace)');
+      if (r.ok) {
+        const ids = ((await r.json()).data || []).map(m => m.id);
+        const model = env.AI_MODEL || 'claude-sonnet-5-5';
+        const has = ids.some(id => id === model || id.startsWith(model));
+        add('Writing model', has, has ? `${model} is available` : `${model} not found for this key`, has ? '' : 'Check AI_MODEL in wrangler.toml');
+      }
+    } catch (e) { add('Anthropic API key', false, 'Could not reach Anthropic', 'Try again in a minute'); }
+  }
+
+  add('Password reset and contact emails', !!env.RESEND_API_KEY, env.RESEND_API_KEY ? 'Resend key set' : 'Optional, not set yet', 'Add RESEND_API_KEY later', true);
+  add('Test modes off', env.MOCK_AI !== '1' && env.MOCK_PAYMENTS !== '1', env.MOCK_AI === '1' || env.MOCK_PAYMENTS === '1' ? 'MOCK_AI or MOCK_PAYMENTS is on' : 'Real payments and real writing', 'Remove MOCK_ variables from Cloudflare');
+  return json({ checks, checked_at: nowIso() });
+});
+
 on('GET', 'admin/events', async ({ request, env }) => {
   await requireAdmin(env, request);
   const { results } = await env.DB.prepare(
