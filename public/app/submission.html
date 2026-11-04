@@ -124,6 +124,7 @@ async function run() {
         if (err.status === 502 || err.status === 503) { await load(); running = false; return; }
         throw err;
       }
+      if (r.failed) { await load(); running = false; return; }
       if (r.busy) await new Promise(res => setTimeout(res, 5000));
       const fresh = await TI.api('submissions/' + id);
       sub = fresh.submission; issues = fresh.issues;

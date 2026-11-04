@@ -309,24 +309,25 @@ async function markPaid(env, s, { sessionId, intent = null, amount, status }) {
 }
 
 // Runs the next step of generation. The browser calls this until progress reaches 4.
-on('POST', 'submissions/:id/generate', async ({ request, env, args }) => {
+on('POST', 'submissions/:id/generate', async ({ request, env, ctx, args }) => {
   const user = await requireUser(env, request);
   let s = await ownedSubmission(env, user, args.id);
   if (s.status === 'awaiting_payment') return error('Please complete payment first.', 402);
   if (s.status === 'complete') return json({ status: 'complete', progress: 4 });
 
   const lock = await env.DB.prepare("UPDATE submissions SET locked_until = ?, status = 'generating', error = NULL, updated_at = ? WHERE id = ? AND (locked_until IS NULL OR locked_until < ?)")
-    .bind(nowIso(4 * 60_000), nowIso(), s.id, nowIso()).run();
+    .bind(nowIso(9 * 60_000), nowIso(), s.id, nowIso()).run();
   if (!lock.meta.changes) return json({ status: 'generating', progress: s.progress, busy: true });
 
   const sub = { ...s, questionnaire: safeParse(s.questionnaire, {}), settings: safeParse(s.settings, {}) };
+  const doStep = async () => {
   try {
     if (s.progress === 0) {
       const { brief, model, usage } = await planSeries(env, sub);
       await env.DB.prepare('UPDATE submissions SET brief = ?, progress = 1, model = ?, input_tokens = input_tokens + ?, output_tokens = output_tokens + ?, locked_until = NULL, updated_at = ? WHERE id = ?')
         .bind(JSON.stringify(brief), model, usage.input_tokens || 0, usage.output_tokens || 0, nowIso(), s.id).run();
       await logEvent(env, 'plan_created', { userId: s.user_id, submissionId: s.id });
-      return json({ status: 'generating', progress: 1 });
+      return { status: 'generating', progress: 1 };
     }
     const brief = safeParse(s.brief, null);
     const batch = BATCHES[s.progress - 1];
@@ -342,15 +343,34 @@ on('POST', 'submissions/:id/generate', async ({ request, env, args }) => {
       .bind(next, done ? 'complete' : 'generating', done ? nowIso() : null, model, usage.input_tokens || 0, usage.output_tokens || 0, nowIso(), s.id));
     await env.DB.batch(stmts);
     if (done) await logEvent(env, 'submission_completed', { userId: s.user_id, submissionId: s.id });
-    return json({ status: done ? 'complete' : 'generating', progress: next });
+    return { status: done ? 'complete' : 'generating', progress: next };
   } catch (e) {
     const msg = e instanceof HttpError ? e.message : 'Something went wrong while writing. Please try again.';
     const u = e.usage || {};
     await env.DB.prepare("UPDATE submissions SET status = 'failed', error = ?, locked_until = NULL, input_tokens = input_tokens + ?, output_tokens = output_tokens + ?, updated_at = ? WHERE id = ?")
       .bind(msg, u.input_tokens || 0, u.output_tokens || 0, nowIso(), s.id).run();
     await logEvent(env, 'generation_failed', { userId: s.user_id, submissionId: s.id, data: { step: s.progress, message: String(e.message || e).slice(0, 500), detail: e.detail || null, tokens: u } });
-    return error(msg, 502, { progress: s.progress });
+    return { failed: true, error: msg, progress: s.progress };
   }
+  };
+
+  // Claude can take a few minutes on a long book, but Cloudflare drops a silent request after 100 seconds (error 524).
+  // So we stream: send a space every 10 seconds to keep the line open, then the JSON result at the end.
+  // Leading spaces are valid JSON whitespace, so the browser parses the body normally.
+  const { readable, writable } = new TransformStream();
+  const writer = writable.getWriter();
+  const enc = new TextEncoder();
+  writer.write(enc.encode(' ')).catch(() => {});
+  const beat = setInterval(() => writer.write(enc.encode(' ')).catch(() => {}), 10_000);
+  const work = (async () => {
+    let result;
+    try { result = await doStep(); }
+    catch (e) { result = { failed: true, error: 'Something went wrong while writing. Please try again.', progress: s.progress }; }
+    finally { clearInterval(beat); }
+    try { await writer.write(enc.encode(JSON.stringify(result))); await writer.close(); } catch { /* customer closed the tab */ }
+  })();
+  if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(work);
+  return new Response(readable, { status: 200, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
 });
 
 on('POST', 'submissions/:id/feedback', async ({ request, env, args }) => {
