@@ -212,7 +212,7 @@ function warnLeave(e) { e.preventDefault(); e.returnValue = ''; }
 function renderDone() {
   stopTicker();
   TI.$('#issue-nav').innerHTML = issues.map(i => `<button type="button" data-n="${i.number}"><b>${TI.esc(i.month_label || 'Issue ' + i.number)}</b>${TI.esc(i.subject)}</button>`).join('');
-  TI.$$('#issue-nav button').forEach(b => b.addEventListener('click', () => show(Number(b.dataset.n))));
+  TI.$$('#issue-nav button').forEach(b => { const it = issues.find(x => x.number === Number(b.dataset.n)); if (it && /\[[^\]]+\](?!\()/.test(it.body)) b.insertAdjacentHTML('beforeend', '<span class="nav-fill">Needs your details</span>'); b.addEventListener('click', () => show(Number(b.dataset.n))); });
   show(current);
   rating = sub.rating || 0; renderStars();
   TI.$('#fb').value = sub.feedback || '';
@@ -241,7 +241,8 @@ function show(n) {
       ${i.subject_alt ? `<div><dt>Subject B</dt><dd>${TI.esc(i.subject_alt)} <span class="small muted">for an A/B test</span></dd></div>` : ''}
       <div><dt>Preview</dt><dd>${TI.esc(i.preview_text)}</dd></div>
     </dl>
-    <div class="prose"><h2>${TI.esc(i.headline)}</h2>${TI.md(i.body)}
+    ${/\[[^\]]+\](?!\()/.test(i.body + i.subject + (i.subject_alt || '') + i.preview_text) ? '<div class="fill-in">This issue has details for you to fill in, highlighted in yellow. Click <strong>Edit issue</strong> to add them before you send.</div>' : ''}
+    <div class="prose"><h2>${TI.esc(i.headline)}</h2>${TI.md(i.body).replace(/\[([^\]<]+)\](?!\()/g, '<mark class="fill">[$1]</mark>')}
       ${i.cta ? `<p>${link ? `<a class="cta-line" href="${TI.esc(link)}" target="_blank" rel="noopener">${TI.esc(i.cta)}</a>` : `<span class="cta-line">${TI.esc(i.cta)}</span>`}</p>` : ''}</div>
     ${i.image_idea ? `<p class="small muted" style="margin-top:1.4rem"><strong>Image idea:</strong> ${TI.esc(i.image_idea)}</p>` : ''}`;
   TI.$$('[data-copy]').forEach(b => b.addEventListener('click', () => {

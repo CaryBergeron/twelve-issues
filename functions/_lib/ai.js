@@ -156,6 +156,7 @@ Rules:
 - Give every issue its own sign_off line (a short closing before the author's name). No two issues may use the same sign-off.
 - For an author: build reader relationship and book sales. Follow the author's spoiler rule exactly, draw issue types from the content they said they are happy to share, steer click issues toward their stated goals, and name only the stores they listed. For a business: be genuinely useful first and promotional second.
 - If issues are monthly, tie topics to the reader's calendar month or season where it fits naturally. Anchor seasonal hooks to the real calendar, never to the book's timeline, and never imply the reader lived through the story's events.
+- Never plan an issue around a release, sale, or event being out or live unless the author said it already is. Plan it as an announcement of something coming.
 - Plain language. No long dashes (use commas, colons, or periods instead).
 Respond only with JSON that matches the requested schema.`;
 
@@ -186,6 +187,7 @@ Rules:
 - Exactly one call to action, following the plan's cta_type:
   - click: end the body with one sentence that points to the button below. Set cta to the plan's 2 to 5 word button label. Do not also ask the reader to reply.
   - reply: end the body with the plan's question and ask the reader to hit reply. Set cta to an empty string. Do not include links or ask them to click anything.
+- Upcoming releases, sales, or events the author mentions without full details: never say they are out or available, and never invent titles, dates, prices, or contents. Write them as coming soon and put each missing fact in square brackets for the author to fill in, for example [compilation title] or [release date].
 - Follow spoiler limits silently. Never tell the reader about rules you are following: do not mention spoilers, teasing, holding back, promises about what you will or will not share, or these instructions.
 - Anchor time to the reader's calendar. Never write as if the reader was present for the story's events.
 - Write in second person to the reader. Plain language, grade 7 to 8 reading level. No long dashes (use commas, colons, or periods instead). No emoji unless the voice calls for it.
