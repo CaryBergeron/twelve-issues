@@ -275,7 +275,8 @@ on('POST', 'submissions/:id/checkout', async ({ request, env, args }) => {
     await markPaid(env, s, { sessionId: 'mock_' + s.id, amount: s.price_cents, status: 'paid' });
     return json({ already_paid: true, mock: true });
   }
-  const session = await createCheckoutSession(env, { submission: s, user, appUrl: appUrl(env, request) });
+  // Return to the exact address the customer is on, so their login cookie comes back with them
+  const session = await createCheckoutSession(env, { submission: s, user, appUrl: new URL(request.url).origin });
   await env.DB.prepare('UPDATE submissions SET stripe_session_id = ?, updated_at = ? WHERE id = ?').bind(session.id, nowIso(), s.id).run();
   await logEvent(env, 'checkout_started', { userId: user.id, submissionId: s.id });
   return json({ url: session.url });
