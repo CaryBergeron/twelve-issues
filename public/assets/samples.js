@@ -1,0 +1,55 @@
+// Real, unedited issues written by Twelve Issues from Devil's Dawn by Charlotte Raine (owned pen name, used with permission)
+window.TI_SAMPLES = [
+  {
+    month: 'January', type: 'Reply issue', format: 'Character spotlight',
+    subject: 'The salad Teresa Daniels eats every single day',
+    subject_alt: 'Why nobody wishes Teresa a happy birthday',
+    preview: 'A fresh-start look at the FBI agent who sticks to her routines.',
+    headline: 'Meet Teresa Daniels', cta: '',
+    notes: [
+      ['From the book', 'Her daily salad, the thrown stapler, and a real line of dialogue, all pulled from the manuscript.'],
+      ['Tied to the month', 'January habits meet a character who never changes hers.'],
+      ['One ask', 'A question readers answer by hitting reply. No button, no links.'],
+    ],
+    body: "Happy new year! If you're thinking about habits this month, there's one FBI agent who has you beat. Teresa Daniels eats the exact same salad every day.\n\nI thought January was the perfect time to introduce her properly.\n\n## Where she started\n\nTeresa was born on the South Side of Chicago. She was later adopted by the Daniels family in a small town that was very different from where she began. Now she's an FBI agent in the Anchorage office, and she keeps that past close to her chest.\n\nShe's the kind of person who knows what she likes and doesn't change it for anybody.\n\n## The salad\n\nHer lunch never varies. Here's what goes in the container:\n\n- Romaine lettuce\n- Croutons\n- Olives\n- Mushrooms\n- Chicken breast\n- Feta cheese\n- A squeeze of lemon juice\n\nNo surprises, and that's the way she likes it.\n\n## The birthday rule\n\nTeresa doesn't celebrate her birthday. Her old partner Stephen learned this the hard way. He once wished her a happy birthday and earned himself a thrown stapler.\n\nThese days, Stephen has found a safer way. He says \"Happy unbirthday,\" like Alice in Wonderland. He now works in Seattle and has been married to Gina since he was twenty. When his jokes get bad, Teresa has one reply: she threatens him with his ugly purple tie.\n\n## Not the dinner type\n\nHer current partner is Donovan, and she decides she should get to know him better. She asks him to dinner, with one request:\n\n\"Somewhere with a good variety of alcohol.\"\n\nHis answer is perfect: \"I think they call those bars.\"\n\nThat's Teresa. Guarded, funny, and a bit hard to read, but you can't help rooting for her. Wyatt, Alaska is a long way from Chicago, and watching her work alongside Aaron Grant is half the fun of *Devil's Dawn*.\n\nI like to think that routines are her armor. When the world gets unpredictable, the salad stays the same. I get that. A new year makes many of us think about the things we do on repeat, the good ones and the ones we might trade in.\n\nSo here's my question for you. Teresa eats the same salad every day. What's the one routine you never change? Hit reply and tell me. I'd love to hear it.\n\nHere's to a new year of good habits and better books.\n\nCharlotte Raine",
+  },
+  {
+    month: 'February', type: 'Click issue', format: 'Bonus scene',
+    subject: 'Aaron goes shopping (a bonus scene)',
+    subject_alt: 'Opals, lilies, and one very careful gift',
+    preview: 'A short peek at the thought behind a surprise, just in time for February.',
+    headline: 'A Gift Hunt in Wyatt', cta: 'Start the series',
+    notes: [
+      ['From the book', 'Real places from the manuscript: Pier 1, the hardware store, Vital Meadows florist.'],
+      ['Tied to the month', "Valentine's gift hunting, told as a short scene in Aaron's voice."],
+      ['One ask', 'Readers who want to know how it lands get one button: Start the series.'],
+    ],
+    body: "February is the month of gifts, and gift hunting can say a lot about a person. So here's a short bonus scene, a peek at Aaron Grant on a mission.\n\n## Bonus scene: Aaron, shopping\n\nPier 1 has more picture frames than I expected, and I stand in the aisle longer than I'd like to admit. Black. Silver. Wood. I turn each one over like it might tell me something.\n\nIt's just a frame, I tell myself. It isn't. Whatever goes inside has to matter to her.\n\nI choose, pay, and walk out with the bag under my arm. Then I remember that a frame without wire is just a frame leaning against a wall. So I head to the hardware store and find the picture wire, which is the least romantic thing I've bought all week. I buy it anyway.\n\nVital Meadows is next. In Wyatt, nothing is far, which helps when you're trying to get everything done before you lose your nerve. I stand at the florist's counter and pick calla lilies. They look like something she'd notice and pretend not to.\n\nThe last stop is the one I think about longest. A sterling silver bracelet with a small opal. I hold it up to the light and watch the colors move.\n\nI have the frames, the wire, the flowers, and the bracelet. Now I just have to hope I got it right.\n\n## The thought behind the gift\n\nI love this little moment because it shows how Aaron thinks. He's the acting chief of police, and he spends his days trying to hold a whole town together. But when it comes to Teresa, he's just a man in a store trying to get it right.\n\nTeresa is not an easy person to shop for. She's an FBI agent who keeps her life tidy and her feelings tucked away. Surprising her takes some nerve.\n\nAs for how it all lands, you'll have to meet them in Wyatt to find out. There's suspense, there's banter, and there's a relationship that wobbles. I think you'll find it's worth the trip.\n\nIf you're curious to see where it all goes, the button below will start you on the series.\n\nBe kind to your heart this month.\n\nCharlotte Raine",
+  },
+  {
+    month: 'June', type: 'Click issue', format: 'Seasonal',
+    subject: 'The sun barely sets in Alaska. Perfect for reading.',
+    subject_alt: 'Where to start the series this summer',
+    preview: 'The longest days of the year are a great time to start a new series.',
+    headline: 'The Longest Days and the Midnight Sun', cta: 'Read Midnight Sun',
+    notes: [
+      ['From the book', 'Wyatt, Alaska, and the series reading order come straight from the manuscript.'],
+      ['Tied to the month', 'June means the midnight sun, which sets up the first book, Midnight Sun.'],
+      ['One ask', 'A single button, so readers know exactly what to do.'],
+    ],
+    body: "Summer is the season when the daylight just won't quit. In Alaska, where Wyatt sits, June brings days so long you can read well into the evening without turning on a lamp.\n\nThe summer solstice arrives later this month, around June 20 or 21. That's the longest day of the year, and for a reader like me, it's a gift. More light means more pages.\n\n## A reading plan for long days\n\nIf you've been wondering where to dive into the series, here's an easy way to do it. My Grant & Daniels thrillers are listed in this order on my books page:\n\n1. **Midnight Sun**\n2. **Devil's Dawn**\n3. **Blood Moon**\n\nYou may have started with Devil's Dawn, and that's perfectly fine. If so, Midnight Sun is the one listed first, and the title feels made for this time of year. If you're new here, you could start at the top of the list and let the series carry you through the summer.\n\n## Why a thriller fits a long day\n\nI love reading a suspenseful book in the daylight. You get the thrill without the creepy shadows. You can sit on a porch, by a lake, or on a blanket in the park and still feel that pull to turn the page. Then, when the evening finally comes, you can decide if you want to keep going.\n\nHere's my little list for a perfect long-day read:\n\n- A comfortable spot in the sun\n- A cold drink within reach\n- A book you can't put down\n- Nowhere you need to be\n\n## A few small summer ideas\n\nTake a book on your next trip, even a short one. Read on the porch after dinner while the sky is still bright. Keep a paperback in your bag for waiting rooms and long lines. Every little stretch of daylight is a chance to find out what happens next.\n\nYou can find the series at cravebooks.com, on Amazon, and on my own website. Pick whichever place is easiest for you.\n\nSoak up the daylight and save a little for a page-turner.\n\nCharlotte\n\nP.S. Tap the button below to start with Midnight Sun and make the most of the longest days of the year.",
+  },
+  {
+    month: 'October', type: 'Click issue', format: 'Year-end recommendations',
+    subject: 'Your next thriller is on this shelf',
+    subject_alt: 'Take the quiz: what kind of reader are you?',
+    preview: "Every series I've written, plus a quick quiz to help you pick.",
+    headline: 'Find Your Next Thriller', cta: 'Find your next read',
+    notes: [
+      ['From the book', "Every series and title listed in the back matter, plus the reader quiz printed in her books."],
+      ['Tied to the year', 'The last issue looks back on the year and points readers to what is next.'],
+      ['One ask', 'One button to the full shelf: Find your next read.'],
+    ],
+    body: "The nights are getting longer, and that means it's time to stack your reading pile. Good news: I've got a whole shelf for that.\n\nHello, friend! This is the last issue of our year together, so let's look back for a moment.\n\n## What we got up to\n\nSince last November, we've talked about why dark evenings suit small town thrillers. We unwrapped the Christmas compilation. We spent time with Teresa, Aaron and Donovan. We hunted for a gift in Wyatt, took a call from Seattle, ate our way through a menu tour of Wyatt, and took a peek at my writing life near Vail, Colorado.\n\nIt has been a joy to share it with you.\n\n## Where to read next\n\nHere's the whole shelf, so you can pick based on your mood:\n\n- **The Grant & Daniels thrillers:** *Midnight Sun*, *Devil's Dawn* and *Blood Moon*. Small town Alaska, an acting chief of police, an FBI agent and plenty of banter.\n- **Grace Ellery:** *Teacher Beware* and *Disturbed Mind*.\n- **A Trinity of Death:** romantic suspense that begins with the prequel *Do You Want To Play*, then *Voice of the Spirit*, *Violence of the Father* and *Vengeance of the Son*.\n- **The Gun Runner short stories:** *Major Threat*, *Trigger Point* and *Safe At Last*, for when you want something quick.\n- **A Shadow of Death:** romantic suspense with *Particles of Murder* and *Particles of Obsession*.\n- **Titanium Blood:** six books, from *Blood Family* to *Blood Rite*.\n\n## Not sure where to start?\n\nThere's a short quiz called *What Kind Of Reader Are You?* in the back of my books. It's a fun way to figure out which story to pick up next.\n\nEvery book is available on Amazon and on my own website, so grab it wherever you like to shop.\n\nA small thank you before I go. Whether you've read every book or just met Wyatt this year, you make this the best part of my month. I'm so glad you're here.\n\nTap the button below to browse it all at cravebooks.com and find your next read.\n\nThank you for another year of good stories.\n\nCharlotte Raine",
+  },
+];

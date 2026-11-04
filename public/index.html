@@ -24,9 +24,13 @@
       <div class="hero-copy">
         <h1>One upload. One year of newsletters.</h1>
         <p class="lede">Upload your book and get 12 reader newsletters pulled from your own pages: the story behind the story, characters up close, the research that did not fit, and a friendly reminder to buy.</p>
-        <div class="hero-actions">
-          <a class="btn btn-lg" href="/signup.html">Write my 12 issues</a>
-          <span class="price-note"><strong>$12</strong> for all twelve. A dollar an issue.</span>
+        <div class="hero-offer">
+          <div class="hero-price">
+            <span class="launch-tag" data-launch>Launch price</span>
+            <div class="price-line"><strong>$12</strong><span>for all 12 issues.<br>A dollar an issue.</span></div>
+          </div>
+          <a class="btn btn-gold btn-lg hero-cta" href="/signup.html">Write my 12 issues</a>
+          <p class="hero-fine"><span data-launch>Goes to $19 on January 1, 2027.</span> 14-day full refund. Your book is never used to train AI.</p>
         </div>
       </div>
       <figure class="shelf" aria-labelledby="stack-title">
@@ -67,45 +71,24 @@
   </section>
 
   <section class="band band-alt" id="sample">
-    <div class="wrap sample">
-      <div>
+    <div class="wrap">
+      <div class="sample-head">
         <h2>Real letters, not filler</h2>
-        <p class="muted">This is June from <em>Devil&rsquo;s Dawn</em>, a small-town Alaska thriller by Charlotte Raine. It is exactly what Twelve Issues wrote from her manuscript, unedited.</p>
-        <p class="muted">Every issue comes with two subject lines to test, preview text, a headline, 350 to 550 words drawn from your pages, and one clear thing for readers to do.</p>
-        <ul class="sample-notes">
-          <li><strong>From the book:</strong> Wyatt, Alaska, and the series reading order come straight from the manuscript.</li>
-          <li><strong>Tied to the month:</strong> June means the midnight sun, which sets up the first book, <em>Midnight Sun</em>.</li>
-          <li><strong>One ask:</strong> a single button, so readers know exactly what to do.</li>
-        </ul>
+        <p class="muted">Four months from <em>Devil&rsquo;s Dawn</em>, a small-town Alaska thriller by Charlotte Raine. Exactly what Twelve Issues wrote from the manuscript, unedited. Click through the year.</p>
       </div>
-      <article class="letter" aria-label="Sample newsletter from Devil's Dawn">
-        <dl class="letter-meta">
-          <div><dt>Subject A</dt><dd>The sun barely sets in Alaska. Perfect for reading.</dd></div>
-          <div><dt>Subject B</dt><dd>Where to start the series this summer</dd></div>
-          <div><dt>Preview</dt><dd>The longest days of the year are a great time to start a new series.</dd></div>
-        </dl>
-        <div class="letter-body letter-clip" id="letter-body">
-          <h3>The Longest Days and the Midnight Sun</h3>
-          <p>Summer is the season when the daylight just won&rsquo;t quit. In Alaska, where Wyatt sits, June brings days so long you can read well into the evening without turning on a lamp.</p>
-          <p>The summer solstice arrives later this month, around June 20 or 21. That&rsquo;s the longest day of the year, and for a reader like me, it&rsquo;s a gift. More light means more pages.</p>
-          <h4>A reading plan for long days</h4>
-          <p>If you&rsquo;ve been wondering where to dive into the series, here&rsquo;s an easy way to do it. My Grant &amp; Daniels thrillers are listed in this order on my books page:</p>
-          <ol><li><strong>Midnight Sun</strong></li><li><strong>Devil&rsquo;s Dawn</strong></li><li><strong>Blood Moon</strong></li></ol>
-          <p>You may have started with Devil&rsquo;s Dawn, and that&rsquo;s perfectly fine. If so, Midnight Sun is the one listed first, and the title feels made for this time of year. If you&rsquo;re new here, you could start at the top of the list and let the series carry you through the summer.</p>
-          <h4>Why a thriller fits a long day</h4>
-          <p>I love reading a suspenseful book in the daylight. You get the thrill without the creepy shadows. You can sit on a porch, by a lake, or on a blanket in the park and still feel that pull to turn the page. Then, when the evening finally comes, you can decide if you want to keep going.</p>
-          <p>Here&rsquo;s my little list for a perfect long-day read:</p>
-          <ul><li>A comfortable spot in the sun</li><li>A cold drink within reach</li><li>A book you can&rsquo;t put down</li><li>Nowhere you need to be</li></ul>
-          <h4>A few small summer ideas</h4>
-          <p>Take a book on your next trip, even a short one. Read on the porch after dinner while the sky is still bright. Keep a paperback in your bag for waiting rooms and long lines. Every little stretch of daylight is a chance to find out what happens next.</p>
-          <p>You can find the series at cravebooks.com, on Amazon, and on my own website. Pick whichever place is easiest for you.</p>
-          <p>Soak up the daylight and save a little for a page-turner.</p>
-          <p>Charlotte</p>
-          <p>P.S. Tap the button below to start with Midnight Sun and make the most of the longest days of the year.</p>
-          <p><span class="cta-line">Read Midnight Sun</span></p>
+      <div class="sample-tabs" role="tablist" aria-label="Sample months" id="sample-tabs"></div>
+      <div class="sample">
+        <div>
+          <p class="sample-kind" id="sample-kind"></p>
+          <ul class="sample-notes" id="sample-notes"></ul>
+          <p class="small muted" style="margin-top:1.4rem">Every issue comes with two subject lines to test, preview text, a headline, 350 to 550 words drawn from your pages, and one clear thing for readers to do.</p>
         </div>
-        <button type="button" class="letter-more" id="letter-more" aria-expanded="false" aria-controls="letter-body">Read the whole email</button>
-      </article>
+        <article class="letter" aria-live="polite" id="sample-letter">
+          <dl class="letter-meta" id="sample-meta"></dl>
+          <div class="letter-body letter-clip" id="letter-body"></div>
+          <button type="button" class="letter-more" id="letter-more" aria-expanded="false" aria-controls="letter-body">Read the whole email</button>
+        </article>
+      </div>
     </div>
   </section>
 
@@ -131,8 +114,10 @@
         <p class="muted">Most books are finished in about five minutes. Not happy? Email us within 14 days for a full refund.</p>
       </div>
       <div class="ticket">
+        <span class="launch-tag" data-launch>Launch price</span>
         <div class="amount"><sup>$</sup>12</div>
         <p class="muted">per book, all twelve issues</p>
+        <p class="ticket-launch" data-launch>Goes to $19 on January 1, 2027</p>
         <ul>
           <li>12 complete reader newsletters</li>
           <li>Subject lines, preview text, and buy links</li>
@@ -164,6 +149,7 @@
 </main>
 
 <script src="/assets/app.js"></script>
+<script src="/assets/samples.js"></script>
 <script>
   const SETS = {
     romance: { title: 'A year of subject lines from a small-town romance', months: [
@@ -211,13 +197,39 @@
   }
   document.querySelectorAll('.toggle button').forEach(b => b.addEventListener('click', () => show(b.dataset.set, true)));
   show('romance', true);
+  // Launch pricing ends on Jan 1, 2027: hide the launch lines after that (update PRICE_CENTS in wrangler.toml the same day)
+  if (Date.now() >= Date.UTC(2027, 0, 1, 7)) document.querySelectorAll('[data-launch]').forEach(el => el.remove());
+
+  // Sample issues: one tab per month
+  const samples = window.TI_SAMPLES || [];
+  const tabs = document.getElementById('sample-tabs');
+  const body = document.getElementById('letter-body');
   const more = document.getElementById('letter-more');
+  tabs.innerHTML = samples.map((x, i) => `<button type="button" role="tab" id="stab-${i}" aria-selected="${i === 0}" data-i="${i}"><b>${TI.esc(x.month)}</b><span>${TI.esc(x.format)}</span></button>`).join('');
+  function showSample(i) {
+    const x = samples[i];
+    tabs.querySelectorAll('button').forEach(b => b.setAttribute('aria-selected', String(Number(b.dataset.i) === i)));
+    document.getElementById('sample-kind').innerHTML = `<span class="kind-pill ${x.cta ? 'click' : 'reply'}">${TI.esc(x.type)}</span> ${TI.esc(x.month)}: ${TI.esc(x.format)}`;
+    document.getElementById('sample-notes').innerHTML = x.notes.map(([a, b]) => `<li><strong>${TI.esc(a)}:</strong> ${TI.esc(b)}</li>`).join('');
+    document.getElementById('sample-meta').innerHTML = `<div><dt>Subject A</dt><dd>${TI.esc(x.subject)}</dd></div><div><dt>Subject B</dt><dd>${TI.esc(x.subject_alt)}</dd></div><div><dt>Preview</dt><dd>${TI.esc(x.preview)}</dd></div>`;
+    body.innerHTML = `<h3>${TI.esc(x.headline)}</h3>${TI.md(x.body).replace(/<h3>/g, '<h4>').replace(/<\/h3>/g, '</h4>')}${x.cta ? `<p><span class="cta-line">${TI.esc(x.cta)}</span></p>` : '<p class="reply-note">No button this month: readers reply to this email.</p>'}`;
+    body.classList.remove('letter-open'); body.scrollTop = 0;
+    more.setAttribute('aria-expanded', 'false'); more.textContent = 'Read the whole email';
+  }
+  tabs.addEventListener('click', e => { const b = e.target.closest('button[data-i]'); if (b) showSample(Number(b.dataset.i)); });
+  tabs.addEventListener('keydown', e => {
+    if (!['ArrowRight', 'ArrowLeft'].includes(e.key)) return;
+    const cur = Number(tabs.querySelector('[aria-selected="true"]').dataset.i);
+    const next = (cur + (e.key === 'ArrowRight' ? 1 : -1) + samples.length) % samples.length;
+    showSample(next); tabs.querySelector(`[data-i="${next}"]`).focus();
+  });
   more.addEventListener('click', () => {
-    const body = document.getElementById('letter-body');
     const open = body.classList.toggle('letter-open');
     more.setAttribute('aria-expanded', String(open));
     more.textContent = open ? 'Show less' : 'Read the whole email';
+    if (!open) document.getElementById('sample-letter').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   });
+  if (samples.length) showSample(0);
   TI.loadMe().then(u => u && TI.renderNav(u));
   TI.track('landing_view');
 </script>

@@ -82,7 +82,7 @@
     <button class="btn btn-ghost" id="tips-copy" type="button">Copy checklist</button>
     <button class="btn" id="tips-close" type="button">Got it, show my issues</button>
   </div>
-  <p class="small muted" style="margin:.8rem 0 0">This checklist stays in the sidebar next to your issues.</p>
+  <p class="small muted" style="margin:.8rem 0 0">This checklist stays in the sidebar. Tick items off as you go and watch it reach 100%.</p>
 </dialog>
 <script src="/assets/app.js"></script>
 <script>
@@ -223,33 +223,59 @@ function warnLeave(e) { e.preventDefault(); e.returnValue = ''; }
 
 // ----- finished issues -----
 
-// ----- "before you go live" checklist: popup once, then a note in the sidebar -----
+// ----- "before you go live" checklist: popup once, then a collapsible checklist in the sidebar -----
 const FILL_RE = /\[[^\]]+\](?!\()/;
 function buildTips() {
   const blanks = issues.filter(i => FILL_RE.test([i.subject, i.subject_alt, i.preview_text, i.headline, i.body].join(' '))).map(i => i.number);
   const replies = issues.filter(i => !i.cta).length;
   const link = sub.settings.cta_url;
   const tips = [];
-  if (blanks.length) tips.push(`Fill in the highlighted blanks in issue${blanks.length > 1 ? 's' : ''} ${blanks.join(', ')}. These are details we could not know, like a title or release date.`);
-  tips.push(link ? `Check that every button goes where you expect. Buttons link to ${link}.` : 'Add your main link: the buttons in your click issues do not point anywhere yet.');
-  tips.push('Pick subject A or B for each issue, or split test them. Mailchimp, Kit, and MailerLite all let you A/B test subject lines.');
-  tips.push('Read each issue once with fresh eyes for anything you would rather keep private or that gives away too much.');
-  if (replies) tips.push(`${replies} of your 12 issues ask readers to hit reply. Send from an address you actually check, not a no-reply address.`);
-  tips.push('Add an image to each issue. You will find an image idea at the bottom of every one.');
-  tips.push('Schedule them now: the same day each month, like the first Tuesday at 9 am, so readers learn to expect you.');
-  tips.push('Send yourself a test of the first issue to see how it looks on your phone.');
+  if (blanks.length) tips.push({ k: 'blanks', t: `Fill in the highlighted blanks in issue${blanks.length > 1 ? 's' : ''} ${blanks.join(', ')}. These are details we could not know, like a title or release date.` });
+  tips.push({ k: 'links', t: link ? `Check that every button goes where you expect. Buttons link to ${link}.` : 'Add your main link: the buttons in your click issues do not point anywhere yet.' });
+  tips.push({ k: 'subjects', t: 'Pick subject A or B for each issue, or split test them. Mailchimp, Kit, and MailerLite all let you A/B test subject lines.' });
+  tips.push({ k: 'privacy', t: 'Read each issue once with fresh eyes for anything you would rather keep private or that gives away too much.' });
+  if (replies) tips.push({ k: 'replies', t: `${replies} of your 12 issues ask readers to hit reply. Send from an address you actually check, not a no-reply address.` });
+  tips.push({ k: 'images', t: 'Add an image to each issue. You will find an image idea at the bottom of every one.' });
+  tips.push({ k: 'test', t: 'Send yourself a test of the first issue to see how it looks on your phone.' });
+  tips.push({ k: 'schedule', t: 'Schedule all 12 in your email tool: the same day each month, like the first Tuesday at 9 am, so readers learn to expect you.' });
   return tips;
 }
 function tipsText() {
-  return `Before going live with your 12 issues of ${sub.title}:\n\n` + buildTips().map((t, i) => `${i + 1}. ${t}`).join('\n');
+  return `Before going live with your 12 issues of ${sub.title}:\n\n` + buildTips().map((x, i) => `[ ] ${i + 1}. ${x.t}`).join('\n');
 }
+const CHECK_KEY = () => 'ti_check_' + id;
+function loadChecks() { try { return JSON.parse(localStorage.getItem(CHECK_KEY()) || '{}'); } catch { return {}; } }
+function saveChecks(c) { try { localStorage.setItem(CHECK_KEY(), JSON.stringify(c)); } catch {} }
+let checklistOpen = false;
+
 function renderTips() {
   const tips = buildTips();
-  const items = tips.map(t => `<li>${TI.esc(t)}</li>`).join('');
-  TI.$('#side-note').innerHTML = `<details open><summary>Before you go live</summary><ol>${items}</ol>
-    <button type="button" class="btn btn-sm btn-ghost" id="note-copy">Copy checklist</button></details>`;
+  const checks = loadChecks();
+  const done = tips.filter(x => checks[x.k]).length;
+  const pct = Math.round((done / tips.length) * 100);
+  const complete = done === tips.length;
+  TI.$('#side-note').innerHTML = `
+    <div class="gl ${complete ? 'gl-done' : ''}">
+      <button type="button" class="gl-head" id="gl-toggle" aria-expanded="${checklistOpen}" aria-controls="gl-body">
+        <span class="gl-title">${complete ? 'Ready to go live' : 'Before you go live'}</span>
+        <span class="gl-count">${complete ? '100% complete' : `${done} of ${tips.length} done`}</span>
+        <span class="gl-bar" aria-hidden="true"><span style="width:${pct}%"></span></span>
+        <span class="gl-more">${checklistOpen ? 'Hide checklist' : 'View checklist'}</span>
+      </button>
+      <div class="gl-body" id="gl-body" ${checklistOpen ? '' : 'hidden'}>
+        <ul>${tips.map(x => `<li><label><input type="checkbox" data-k="${x.k}" ${checks[x.k] ? 'checked' : ''}><span>${TI.esc(x.t)}</span></label></li>`).join('')}</ul>
+        <button type="button" class="btn btn-sm btn-ghost" id="note-copy">Copy checklist</button>
+      </div>
+    </div>`;
+  TI.$('#gl-toggle').addEventListener('click', () => { checklistOpen = !checklistOpen; renderTips(); });
+  TI.$$('#gl-body input[type=checkbox]').forEach(cb => cb.addEventListener('change', () => {
+    const c = loadChecks(); c[cb.dataset.k] = cb.checked; saveChecks(c);
+    const nowDone = tips.every(x => c[x.k]);
+    if (nowDone) TI.track('checklist_complete');
+    renderTips();
+  }));
   TI.$('#note-copy').addEventListener('click', e => TI.copy(tipsText(), e.currentTarget));
-  TI.$('#tips-list').innerHTML = items;
+  TI.$('#tips-list').innerHTML = tips.map(x => `<li>${TI.esc(x.t)}</li>`).join('');
   let seen = false;
   try { seen = localStorage.getItem('ti_tips_' + id) === '1'; } catch {}
   const dlg = TI.$('#tips-modal');
