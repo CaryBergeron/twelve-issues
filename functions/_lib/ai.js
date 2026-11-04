@@ -26,9 +26,10 @@ export function sampleText(text = '', maxChars) {
   return parts.join('\n\n[...]\n\n');
 }
 
-// Ask Claude to answer by calling a tool, so the result always arrives as valid structured data.
-// Retries once on a malformed or cut-off answer. Usage from every attempt is returned (or attached to the error).
-async function callClaudeTool(env, { system, prompt, maxTokens, tool }) {
+// Ask Claude for JSON that must match a schema (structured outputs, output_config.format).
+// Sonnet 5.5 does not allow forced tool use, so this is the supported way to get guaranteed-valid data.
+// Retries once on a cut-off or unparseable answer. Usage from every attempt is returned (or attached to the error).
+async function callClaudeJson(env, { system, prompt, maxTokens, tool }) {
   if (!env.ANTHROPIC_API_KEY) throw new HttpError(503, 'The writing engine is not set up yet.');
   const model = env.AI_MODEL || DEFAULT_MODEL;
   const usage = { input_tokens: 0, output_tokens: 0 };
@@ -39,7 +40,7 @@ async function callClaudeTool(env, { system, prompt, maxTokens, tool }) {
       headers: { 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
       body: JSON.stringify({
         model, max_tokens: maxTokens, system,
-        tools: [tool], tool_choice: { type: 'tool', name: tool.name },
+        output_config: { format: { type: 'json_schema', schema: tool.input_schema } },
         messages: [{ role: 'user', content: prompt }],
       }),
     });
@@ -52,11 +53,15 @@ async function callClaudeTool(env, { system, prompt, maxTokens, tool }) {
       if (res.status === 429 || res.status >= 500) { lastProblem = err.message; if (attempt < 2) { await new Promise(r => setTimeout(r, 4000)); continue; } }
       throw err;
     }
-    const block = (data.content || []).find(b => b.type === 'tool_use' && b.name === tool.name);
-    if (block && block.input && data.stop_reason !== 'max_tokens') return { input: block.input, model, usage };
-    lastProblem = data.stop_reason === 'max_tokens' ? 'answer ran past the length limit' : 'no structured answer returned';
+    const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    if (data.stop_reason === 'max_tokens') { lastProblem = 'answer ran past the length limit'; continue; }
+    if (data.stop_reason === 'refusal') { lastProblem = 'the model declined this content'; break; }
+    try { return { input: JSON.parse(text), model, usage }; }
+    catch { lastProblem = 'answer was not valid JSON'; }
   }
-  const err = new HttpError(502, 'The writing engine returned an unreadable answer. Please try again.');
+  const err = new HttpError(502, lastProblem === 'the model declined this content'
+    ? 'The writing engine declined to work with this book. Please contact us and we will sort it out.'
+    : 'The writing engine returned an unreadable answer. Please try again.');
   err.usage = usage; err.detail = { problem: lastProblem };
   throw err;
 }
@@ -65,7 +70,7 @@ const PLAN_TOOL = {
   name: 'save_plan',
   description: 'Save the newsletter series brief and the 12-issue plan.',
   input_schema: {
-    type: 'object',
+    type: 'object', additionalProperties: false,
     properties: {
       summary: { type: 'string', description: '2 to 3 sentences on what this content is and who it serves' },
       audience: { type: 'string', description: 'who the newsletter readers are and what they care about' },
@@ -74,7 +79,7 @@ const PLAN_TOOL = {
       issues: {
         type: 'array', description: 'exactly 12 issues, numbered 1 to 12',
         items: {
-          type: 'object',
+          type: 'object', additionalProperties: false,
           properties: {
             number: { type: 'integer' }, label: { type: 'string' },
             format: { type: 'string', description: 'story, how-to, list, behind the scenes, spotlight, reader question, seasonal, etc.' },
@@ -83,7 +88,7 @@ const PLAN_TOOL = {
             notes: { type: 'string', description: 'specific details from the source to use' },
             cta: { type: 'string', description: 'what the reader should do at the end' },
           },
-          required: ['number', 'theme', 'angle', 'cta'],
+          required: ['number', 'label', 'format', 'theme', 'angle', 'notes', 'cta'],
         },
       },
     },
@@ -95,12 +100,12 @@ const ISSUES_TOOL = {
   name: 'save_issues',
   description: 'Save the finished newsletter issues.',
   input_schema: {
-    type: 'object',
+    type: 'object', additionalProperties: false,
     properties: {
       issues: {
         type: 'array',
         items: {
-          type: 'object',
+          type: 'object', additionalProperties: false,
           properties: {
             number: { type: 'integer' },
             subject: { type: 'string', description: 'under 55 characters' },
@@ -110,7 +115,7 @@ const ISSUES_TOOL = {
             cta: { type: 'string', description: 'button or link text' },
             image_idea: { type: 'string', description: 'one sentence describing a fitting image' },
           },
-          required: ['number', 'subject', 'preview_text', 'headline', 'body', 'cta'],
+          required: ['number', 'subject', 'preview_text', 'headline', 'body', 'cta', 'image_idea'],
         },
       },
     },
@@ -146,7 +151,7 @@ Rules:
 - For an author: build reader relationship and book sales without spoiling major plot twists. Follow the author's spoiler rule exactly, draw issue types from the content they said they are happy to share, steer calls to action toward their stated goals, and name only the stores they listed. For a business: be genuinely useful first and promotional second.
 - If issues are monthly, tie topics to the month or season where it fits naturally.
 - Plain language. No long dashes (use commas, colons, or periods instead).
-Respond only by calling the tool you are given.`;
+Respond only with JSON that matches the requested schema.`;
 
 export async function planSeries(env, sub) {
   const labels = issueLabels(sub.settings);
@@ -160,8 +165,8 @@ SOURCE MATERIAL (${sub.source_chars} characters total${sub.source_chars > BRIEF_
 ${sampleText(sub.source_text || '(No document uploaded. Work from the customer answers above.)', BRIEF_SOURCE_CHARS)}
 </source>
 
-Save the plan with the save_plan tool. The issues array must have exactly 12 items, numbered 1 to 12, using the issue labels above in order.`;
-  const { input: brief, model, usage } = await callClaudeTool(env, { system: EDITOR_SYSTEM, prompt, maxTokens: 16000, tool: PLAN_TOOL });
+Return the plan as JSON matching the schema. The issues array must have exactly 12 items, numbered 1 to 12, using the issue labels above in order.`;
+  const { input: brief, model, usage } = await callClaudeJson(env, { system: EDITOR_SYSTEM, prompt, maxTokens: 32000, tool: PLAN_TOOL });
   if (!Array.isArray(brief.issues) || brief.issues.length < 12) { const e = new HttpError(502, 'The plan came back incomplete. Please try again.'); e.usage = usage; throw e; }
   brief.issues = brief.issues.slice(0, 12).map((it, i) => ({ ...it, number: i + 1, label: labels[i] }));
   return { brief, model, usage };
@@ -174,7 +179,7 @@ Rules:
 - Body structure: a hook in the first two sentences, short paragraphs, one subheading or a short list where it helps, and a warm sign-off line. End with a single clear call to action that matches the plan.
 - Write in second person to the reader. Plain language, grade 7 to 8 reading level. No long dashes (use commas, colons, or periods instead). No emoji unless the voice calls for it.
 - Do not mention that this was planned as a series of 12 or written by AI.
-Respond only by calling the tool you are given.`;
+Respond only with JSON that matches the requested schema.`;
 
 export async function writeBatch(env, sub, brief, numbers) {
   if (env.MOCK_AI === '1') return mockIssues(sub, brief, numbers);
@@ -195,8 +200,8 @@ SOURCE EXCERPT FOR GROUNDING:
 ${sampleText(sub.source_text || '(No document uploaded.)', WRITER_SOURCE_CHARS)}
 </source>
 
-Save the finished issues with the save_issues tool. Include exactly these issue numbers: ${numbers.join(', ')}.`;
-  const { input: out, model, usage } = await callClaudeTool(env, { system: WRITER_SYSTEM, prompt, maxTokens: 16000, tool: ISSUES_TOOL });
+Return the finished issues as JSON matching the schema. Include exactly these issue numbers: ${numbers.join(', ')}.`;
+  const { input: out, model, usage } = await callClaudeJson(env, { system: WRITER_SYSTEM, prompt, maxTokens: 32000, tool: ISSUES_TOOL });
   const issues = (out.issues || []).filter(i => numbers.includes(Number(i.number)));
   if (issues.length !== numbers.length) { const e = new HttpError(502, 'Some issues came back missing. Please try again.'); e.usage = usage; throw e; }
   return { issues, model, usage };
