@@ -60,7 +60,7 @@
       </div>
     </div>
     <div class="viewer">
-      <nav class="issue-nav" id="issue-nav" aria-label="Issues"></nav>
+      <div class="side"><aside class="side-note" id="side-note" aria-label="Before you go live"></aside><nav class="issue-nav" id="issue-nav" aria-label="Issues"></nav></div>
       <article class="panel" id="issue" style="margin:0"></article>
     </div>
     <div class="panel" style="margin-top:1.4rem" id="feedback">
@@ -71,6 +71,19 @@
     </div>
   </section>
 </div></main>
+<dialog class="tips-modal" id="tips-modal" aria-labelledby="tips-title">
+  <div class="tips-head">
+    <span class="keep-open-icon" aria-hidden="true"></span>
+    <div><h2 id="tips-title">Your newsletters are ready</h2>
+    <p class="muted">Here are a few things to consider before going live with them.</p></div>
+  </div>
+  <ol class="tips-list" id="tips-list"></ol>
+  <div class="tips-actions">
+    <button class="btn btn-ghost" id="tips-copy" type="button">Copy checklist</button>
+    <button class="btn" id="tips-close" type="button">Got it, show my issues</button>
+  </div>
+  <p class="small muted" style="margin:.8rem 0 0">This checklist stays in the sidebar next to your issues.</p>
+</dialog>
 <script src="/assets/app.js"></script>
 <script>
 const id = new URLSearchParams(location.search).get('id');
@@ -209,11 +222,49 @@ function stopTicker() {
 function warnLeave(e) { e.preventDefault(); e.returnValue = ''; }
 
 // ----- finished issues -----
+
+// ----- "before you go live" checklist: popup once, then a note in the sidebar -----
+const FILL_RE = /\[[^\]]+\](?!\()/;
+function buildTips() {
+  const blanks = issues.filter(i => FILL_RE.test([i.subject, i.subject_alt, i.preview_text, i.headline, i.body].join(' '))).map(i => i.number);
+  const replies = issues.filter(i => !i.cta).length;
+  const link = sub.settings.cta_url;
+  const tips = [];
+  if (blanks.length) tips.push(`Fill in the highlighted blanks in issue${blanks.length > 1 ? 's' : ''} ${blanks.join(', ')}. These are details we could not know, like a title or release date.`);
+  tips.push(link ? `Check that every button goes where you expect. Buttons link to ${link}.` : 'Add your main link: the buttons in your click issues do not point anywhere yet.');
+  tips.push('Pick subject A or B for each issue, or split test them. Mailchimp, Kit, and MailerLite all let you A/B test subject lines.');
+  tips.push('Read each issue once with fresh eyes for anything you would rather keep private or that gives away too much.');
+  if (replies) tips.push(`${replies} of your 12 issues ask readers to hit reply. Send from an address you actually check, not a no-reply address.`);
+  tips.push('Add an image to each issue. You will find an image idea at the bottom of every one.');
+  tips.push('Schedule them now: the same day each month, like the first Tuesday at 9 am, so readers learn to expect you.');
+  tips.push('Send yourself a test of the first issue to see how it looks on your phone.');
+  return tips;
+}
+function tipsText() {
+  return `Before going live with your 12 issues of ${sub.title}:\n\n` + buildTips().map((t, i) => `${i + 1}. ${t}`).join('\n');
+}
+function renderTips() {
+  const tips = buildTips();
+  const items = tips.map(t => `<li>${TI.esc(t)}</li>`).join('');
+  TI.$('#side-note').innerHTML = `<details open><summary>Before you go live</summary><ol>${items}</ol>
+    <button type="button" class="btn btn-sm btn-ghost" id="note-copy">Copy checklist</button></details>`;
+  TI.$('#note-copy').addEventListener('click', e => TI.copy(tipsText(), e.currentTarget));
+  TI.$('#tips-list').innerHTML = items;
+  let seen = false;
+  try { seen = localStorage.getItem('ti_tips_' + id) === '1'; } catch {}
+  const dlg = TI.$('#tips-modal');
+  if (!seen && typeof dlg.showModal === 'function' && !dlg.open) dlg.showModal();
+}
+TI.$('#tips-copy').addEventListener('click', e => TI.copy(tipsText(), e.currentTarget));
+TI.$('#tips-close').addEventListener('click', () => TI.$('#tips-modal').close());
+TI.$('#tips-modal').addEventListener('close', () => { try { localStorage.setItem('ti_tips_' + id, '1'); } catch {} TI.$('#side-note').scrollIntoView({ behavior: 'smooth', block: 'nearest' }); });
+
 function renderDone() {
   stopTicker();
   TI.$('#issue-nav').innerHTML = issues.map(i => `<button type="button" data-n="${i.number}"><b>${TI.esc(i.month_label || 'Issue ' + i.number)}</b>${TI.esc(i.subject)}</button>`).join('');
   TI.$$('#issue-nav button').forEach(b => { const it = issues.find(x => x.number === Number(b.dataset.n)); if (it && /\[[^\]]+\](?!\()/.test(it.body)) b.insertAdjacentHTML('beforeend', '<span class="nav-fill">Needs your details</span>'); b.addEventListener('click', () => show(Number(b.dataset.n))); });
   show(current);
+  renderTips();
   rating = sub.rating || 0; renderStars();
   TI.$('#fb').value = sub.feedback || '';
 }

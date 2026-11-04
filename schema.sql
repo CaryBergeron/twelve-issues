@@ -96,3 +96,14 @@ CREATE TABLE IF NOT EXISTS events (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 CREATE INDEX IF NOT EXISTS idx_events_type ON events(type);
+
+-- Business costs other than Claude and Stripe (domains, hosting plans, mailboxes, ads)
+CREATE TABLE IF NOT EXISTS expenses (
+  id TEXT PRIMARY KEY,
+  spent_on TEXT NOT NULL,                      -- YYYY-MM-DD (first month for monthly costs)
+  category TEXT NOT NULL,
+  description TEXT NOT NULL,
+  amount_cents INTEGER NOT NULL,
+  monthly INTEGER NOT NULL DEFAULT 0,          -- 1 = repeats every month from spent_on
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);

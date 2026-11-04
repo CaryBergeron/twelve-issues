@@ -427,6 +427,65 @@ on('GET', 'admin/stats', async ({ request, env }) => {
   });
 });
 
+// ---------- admin: money ----------
+function monthsSince(ymd) {
+  const [y, m] = String(ymd).split('-').map(Number);
+  const now = new Date();
+  return Math.max(1, (now.getUTCFullYear() - y) * 12 + (now.getUTCMonth() + 1 - m) + 1);
+}
+async function loadExpenses(env) {
+  try {
+    const { results } = await env.DB.prepare('SELECT id, spent_on, category, description, amount_cents, monthly FROM expenses ORDER BY spent_on DESC, created_at DESC').all();
+    return { ready: true, rows: results.map(r => ({ ...r, total_cents: r.monthly ? r.amount_cents * monthsSince(r.spent_on) : r.amount_cents, months: r.monthly ? monthsSince(r.spent_on) : 1 })) };
+  } catch (e) { return { ready: false, rows: [] }; }
+}
+on('GET', 'admin/finance', async ({ request, env }) => {
+  await requireAdmin(env, request);
+  const isTest = "(stripe_session_id LIKE 'cs_test_%' OR stripe_session_id LIKE 'mock_%')";
+  const [live, test, refunded, tokens, books] = await Promise.all([
+    env.DB.prepare(`SELECT COUNT(*) n, COALESCE(SUM(amount_cents),0) c FROM payments WHERE status = 'paid' AND NOT ${isTest}`).first(),
+    env.DB.prepare(`SELECT COUNT(*) n, COALESCE(SUM(amount_cents),0) c FROM payments WHERE status = 'paid' AND ${isTest}`).first(),
+    env.DB.prepare(`SELECT COUNT(*) n, COALESCE(SUM(amount_cents),0) c FROM payments WHERE status = 'refunded' AND NOT ${isTest}`).first(),
+    env.DB.prepare('SELECT COALESCE(SUM(input_tokens),0) i, COALESCE(SUM(output_tokens),0) o FROM submissions').first(),
+    env.DB.prepare("SELECT COUNT(*) n FROM submissions WHERE status = 'complete'").first(),
+  ]);
+  const inRate = Number(env.AI_INPUT_PER_M || 2), outRate = Number(env.AI_OUTPUT_PER_M || 10);
+  const aiCents = Math.round((tokens.i * inRate + tokens.o * outRate) / 1e4); // dollars per million tokens, to cents
+  const feePct = Number(env.STRIPE_FEE_PCT || 2.9), feeFixed = Number(env.STRIPE_FEE_FIXED_CENTS || 30);
+  const stripeCents = Math.round(live.c * feePct / 100 + live.n * feeFixed);
+  const exp = await loadExpenses(env);
+  const otherCents = exp.rows.reduce((a, r) => a + r.total_cents, 0);
+  return json({
+    revenue_cents: live.c, sales: live.n, refunded_cents: refunded.c, refunds: refunded.n,
+    test_sales: test.n, test_revenue_cents: test.c,
+    ai_cents: aiCents, ai_per_book_cents: books.n ? Math.round(aiCents / books.n) : null, books_written: books.n,
+    input_tokens: tokens.i, output_tokens: tokens.o, rates: { input_per_m: inRate, output_per_m: outRate, stripe_pct: feePct, stripe_fixed_cents: feeFixed },
+    stripe_cents: stripeCents, other_cents: otherCents,
+    profit_cents: live.c - stripeCents - aiCents - otherCents,
+    expenses_ready: exp.ready, expenses: exp.rows,
+  });
+});
+on('POST', 'admin/expenses', async ({ request, env }) => {
+  const admin = await requireAdmin(env, request);
+  const b = await readJson(request, 5_000);
+  const spent_on = str(b.spent_on, 10), description = str(b.description, 200), category = str(b.category, 40) || 'Other';
+  const amount_cents = Math.round(Number(b.amount) * 100);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(spent_on)) return error('Pick a date.');
+  if (!description) return error('Add a short description.');
+  if (!Number.isFinite(amount_cents) || amount_cents <= 0) return error('Enter an amount above zero.');
+  try {
+    await env.DB.prepare('INSERT INTO expenses (id, spent_on, category, description, amount_cents, monthly) VALUES (?, ?, ?, ?, ?, ?)')
+      .bind(uid('x_'), spent_on, category, description, amount_cents, b.monthly ? 1 : 0).run();
+  } catch (e) { return error('The expenses table has not been set up yet.', 409); }
+  await logEvent(env, 'expense_added', { userId: admin.id, data: { description, amount_cents, monthly: !!b.monthly } });
+  return json({ ok: true });
+});
+on('DELETE', 'admin/expenses/:id', async ({ request, env, args }) => {
+  await requireAdmin(env, request);
+  await env.DB.prepare('DELETE FROM expenses WHERE id = ?').bind(args.id).run();
+  return json({ ok: true });
+});
+
 on('GET', 'admin/users', async ({ request, env }) => {
   await requireAdmin(env, request);
   const { results } = await env.DB.prepare(

@@ -24,12 +24,21 @@
     </div>
     <ul class="health-list" id="health-list"><li class="muted">Checking keys...</li></ul>
   </section>
+  <section class="panel money" id="money">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap">
+      <h3 style="margin:0">Money</h3>
+      <span class="small muted" id="money-note"></span>
+    </div>
+    <div class="money-row" id="money-cards"></div>
+    <p class="small muted" id="money-detail" style="margin:.8rem 0 0"></p>
+  </section>
   <div class="stats" id="stats"></div>
   <div class="tabs" role="tablist">
     <button role="tab" aria-selected="true" data-tab="projects">Projects</button>
     <button role="tab" aria-selected="false" data-tab="users">Users</button>
     <button role="tab" aria-selected="false" data-tab="messages">Messages</button>
     <button role="tab" aria-selected="false" data-tab="activity">Activity</button>
+    <button role="tab" aria-selected="false" data-tab="costs">Costs</button>
     <button role="tab" aria-selected="false" data-tab="exports">Exports</button>
   </div>
   <section data-panel="projects">
@@ -42,6 +51,22 @@
   <section data-panel="users" hidden><div class="table-wrap"><table class="data" id="t-users"></table></div></section>
   <section data-panel="messages" hidden><div class="table-wrap"><table class="data" id="t-messages"></table></div></section>
   <section data-panel="activity" hidden><div class="table-wrap"><table class="data" id="t-events"></table></div></section>
+  <section data-panel="costs" hidden>
+    <div class="panel" id="exp-setup" hidden><strong>One-time setup needed.</strong> The costs table has not been created in the database yet.</div>
+    <form class="panel exp-form" id="exp-form">
+      <h3 style="margin-top:0">Add a cost</h3>
+      <div class="exp-grid">
+        <div class="field"><label for="x-date">Date</label><input id="x-date" type="text" placeholder="YYYY-MM-DD" inputmode="numeric"></div>
+        <div class="field"><label for="x-cat">Category</label><select id="x-cat"><option>Domains</option><option>Hosting</option><option>Email</option><option>Software</option><option>Ads</option><option>Refund adjustments</option><option>Other</option></select></div>
+        <div class="field" style="grid-column: span 2"><label for="x-desc">Description</label><input id="x-desc" type="text" maxlength="200" placeholder="For example: twelveissues.com renewal"></div>
+        <div class="field"><label for="x-amt">Amount ($)</label><input id="x-amt" type="text" inputmode="decimal" placeholder="12.00"></div>
+        <div class="field"><label class="chk"><input id="x-monthly" type="checkbox"> Repeats monthly</label><span class="hint">Counted once for every month since the date</span></div>
+      </div>
+      <div id="x-msg" hidden></div>
+      <button class="btn" type="submit">Add cost</button>
+    </form>
+    <div class="table-wrap"><table class="data" id="t-costs"></table></div>
+  </section>
   <section data-panel="exports" hidden>
     <div class="panel">
       <h3>Download your data</h3>
@@ -67,12 +92,15 @@ let projects = [];
     if (b.dataset.tab === 'users') loadUsers();
     if (b.dataset.tab === 'activity') loadEvents();
     if (b.dataset.tab === 'messages') loadMessages();
+    if (b.dataset.tab === 'costs') loadFinance();
   }));
   TI.$('#filter').addEventListener('change', loadProjects);
   TI.$('#scrim').addEventListener('click', closeDrawer);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
   TI.$('#health-run').addEventListener('click', loadHealth);
-  await Promise.all([loadHealth(), loadStats(), loadProjects()]);
+  TI.$('#x-date').value = new Date().toISOString().slice(0, 10);
+  TI.$('#exp-form').addEventListener('submit', addExpense);
+  await Promise.all([loadHealth(), loadFinance(), loadStats(), loadProjects()]);
 })();
 
 const n = v => Number(v || 0).toLocaleString();
@@ -86,19 +114,49 @@ async function loadHealth() {
   } catch (e) { ul.innerHTML = `<li class="bad">${TI.esc(e.message)}</li>`; }
 }
 
+async function loadFinance() {
+  try {
+    const f = await TI.api('admin/finance');
+    const m = c => (c < 0 ? '-' : '') + '$' + (Math.abs(c) / 100).toFixed(2);
+    const cards = [
+      ['Revenue', m(f.revenue_cents), `${n(f.sales)} paid ${f.sales === 1 ? 'sale' : 'sales'}${f.refunds ? `, ${n(f.refunds)} refunded` : ''}`, ''],
+      ['Stripe fees', (f.stripe_cents ? '-' : '') + m(f.stripe_cents), `est. ${f.rates.stripe_pct}% + ${f.rates.stripe_fixed_cents}¢ each`, ''],
+      ['AI cost', (f.ai_cents ? '-' : '') + m(f.ai_cents), f.ai_per_book_cents != null ? `${m(f.ai_per_book_cents)} per book, est.` : 'est. from tokens', ''],
+      ['Other costs', (f.other_cents ? '-' : '') + m(f.other_cents), f.expenses_ready ? `${n(f.expenses.length)} entries` : 'Costs table not set up', ''],
+      ['Profit', m(f.profit_cents), 'Revenue minus all costs', f.profit_cents >= 0 ? 'pos' : 'neg'],
+    ];
+    TI.$('#money-cards').innerHTML = cards.map(([a, b, c, cls]) => `<div class="money-card ${cls}"><span>${a}</span><strong>${TI.esc(b)}</strong><span class="small">${TI.esc(c)}</span></div>`).join('');
+    TI.$('#money-note').textContent = f.test_sales ? `${n(f.test_sales)} test-mode ${f.test_sales === 1 ? 'payment' : 'payments'} (${m(f.test_revenue_cents)}) not counted` : '';
+    TI.$('#money-detail').textContent = `AI cost uses $${f.rates.input_per_m} per million input and $${f.rates.output_per_m} per million output tokens (${n(f.input_tokens)} in, ${n(f.output_tokens)} out, all projects including tests). The Claude Console is the exact source; it is currently covered by your monthly API credit.`;
+    TI.$('#exp-setup').hidden = f.expenses_ready;
+    TI.$('#exp-form').hidden = !f.expenses_ready;
+    TI.$('#t-costs').innerHTML = `<thead><tr><th>Date</th><th>Category</th><th>Description</th><th>Amount</th><th>Counted so far</th><th></th></tr></thead><tbody>` +
+      (f.expenses.length ? f.expenses.map(x => `<tr><td>${TI.esc(x.spent_on)}</td><td>${TI.esc(x.category)}</td><td>${TI.esc(x.description)}</td><td>${m(x.amount_cents)}${x.monthly ? ' / month' : ''}</td><td>${m(x.total_cents)}${x.monthly ? ` (${x.months} mo)` : ''}</td><td><button class="btn btn-sm btn-ghost" data-del="${TI.esc(x.id)}">Delete</button></td></tr>`).join('')
+        : '<tr><td colspan="6" class="muted">No costs added yet.</td></tr>') + '</tbody>';
+    TI.$$('[data-del]').forEach(btn => btn.addEventListener('click', async () => { await TI.api('admin/expenses/' + btn.dataset.del, { method: 'DELETE' }); loadFinance(); }));
+  } catch (err) { TI.showError(TI.$('#msg'), err.message); }
+}
+
+async function addExpense(e) {
+  e.preventDefault();
+  const msg = TI.$('#x-msg');
+  try {
+    await TI.api('admin/expenses', { method: 'POST', body: { spent_on: TI.$('#x-date').value.trim(), category: TI.$('#x-cat').value, description: TI.$('#x-desc').value.trim(), amount: TI.$('#x-amt').value.replace(/[$,]/g, ''), monthly: TI.$('#x-monthly').checked } });
+    TI.$('#x-desc').value = ''; TI.$('#x-amt').value = ''; TI.$('#x-monthly').checked = false; msg.hidden = true;
+    loadFinance();
+  } catch (err) { TI.showError(msg, err.message); }
+}
+
 async function loadStats() {
   try {
     const s = await TI.api('admin/stats');
     const kinds = Object.fromEntries((s.by_kind || []).map(k => [k.kind, k.n]));
-    const cost = (s.input_tokens * 3 + s.output_tokens * 15) / 1e6; // rough Sonnet pricing per million tokens
     const cards = [
       ['Users', n(s.users), `${n(s.users_7d)} in the last 7 days`],
       ['Projects', n(s.submissions), `${n(kinds.author)} books, ${n(kinds.business)} businesses`],
       ['Paid', n(s.paid), s.submissions ? Math.round((s.paid / s.submissions) * 100) + '% of projects' : ''],
-      ['Revenue', TI.money(s.revenue_cents), ''],
       ['Completed', n(s.complete), s.failed ? `${n(s.failed)} need a retry` : 'No failures'],
       ['Avg rating', s.avg_rating ?? 'None yet', s.ratings ? `${n(s.ratings)} ratings` : ''],
-      ['AI cost (est.)', '$' + cost.toFixed(2), `${n(s.input_tokens + s.output_tokens)} tokens`],
     ];
     TI.$('#stats').innerHTML = cards.map(([a, b, c]) => `<div class="stat"><span>${a}</span><strong>${TI.esc(b)}</strong>${c ? `<span class="small">${TI.esc(c)}</span>` : ''}</div>`).join('');
     TI.$('#updated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });

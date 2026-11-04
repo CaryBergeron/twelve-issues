@@ -11,6 +11,11 @@ database_id = "626bfa37-b235-4322-9fd5-3966124d3277"
 APP_URL = "https://twelveissues.com"
 PRICE_CENTS = "1200"
 AI_MODEL = "claude-sonnet-5-5"
+# Cost tracking for the admin dashboard (Claude Sonnet 5.5 list price per million tokens; Stripe US card fee)
+AI_INPUT_PER_M = "2"
+AI_OUTPUT_PER_M = "10"
+STRIPE_FEE_PCT = "2.9"
+STRIPE_FEE_FIXED_CENTS = "30"
 
 # Secrets are set in the Cloudflare dashboard, never in this file:
 # ANTHROPIC_API_KEY, STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, ADMIN_EMAILS
