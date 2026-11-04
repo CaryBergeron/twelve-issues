@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS issues (
   number INTEGER NOT NULL,
   month_label TEXT,
   subject TEXT NOT NULL,
+  subject_alt TEXT,                            -- second subject line for A/B tests
   preview_text TEXT,
   headline TEXT,
   body TEXT NOT NULL,                          -- markdown

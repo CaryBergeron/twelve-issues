@@ -241,6 +241,30 @@ input:focus, select:focus, textarea:focus { border-color: var(--blue); outline: 
 @keyframes slide { to { background-position: 28px 0; } }
 @media (prefers-reduced-motion: reduce) { .progress.working > div { animation: none; } }
 
+/* Live writing status */
+.keep-open { display: flex; gap: 14px; align-items: flex-start; background: #fbf3dc; border: 1.5px solid var(--gold); border-radius: var(--r-md); padding: 14px 16px; margin: .4rem 0 1.4rem; }
+.keep-open strong { font-size: 1.05rem; }
+.keep-open span { color: var(--ink-soft); font-size: .95rem; }
+.keep-open-icon { flex: none; width: 14px; height: 30px; margin-top: 2px; background: var(--gold); clip-path: polygon(0 0, 100% 0, 100% 100%, 50% 80%, 0 100%); }
+.progress { height: 14px; }
+.progress > div { transition: width 1s linear; }
+.progress.working > div { background-color: var(--blue); }
+.work-status { display: flex; align-items: center; gap: .6rem; font-weight: 600; font-size: .98rem; margin: .2rem 0 1rem; min-height: 1.6em; }
+.work-elapsed { margin-left: auto; font-variant-numeric: tabular-nums; color: var(--ink-soft); font-weight: 500; font-size: .9rem; }
+.spinner { flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2.5px solid var(--rule); border-top-color: var(--blue); animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.work-steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.work-steps li { display: flex; align-items: center; gap: .5rem; font-size: .9rem; padding: .55rem .7rem; border-radius: var(--r-sm); background: var(--tint); color: var(--ink-soft); }
+.ws-mark { flex: none; width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--rule); }
+.ws-done { color: var(--ink) !important; }
+.ws-done .ws-mark { background: var(--ok); border-color: var(--ok); position: relative; }
+.ws-done .ws-mark::after { content: ""; position: absolute; left: 4px; top: 1px; width: 4px; height: 8px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+.ws-active { background: #e3eee8 !important; color: var(--ink) !important; font-weight: 600; }
+.ws-active .ws-mark { border-color: var(--blue); border-top-color: transparent; animation: spin .9s linear infinite; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+@media (prefers-reduced-motion: reduce) { .spinner, .ws-active .ws-mark { animation-duration: 3s; } }
+@media (max-width: 640px) { .work-steps { grid-template-columns: 1fr 1fr; } }
+
 /* Issue viewer */
 .viewer { display: grid; grid-template-columns: 260px 1fr; gap: 28px; align-items: start; }
 .issue-nav { position: sticky; top: 86px; border: 1px solid var(--rule); border-radius: var(--r-md); overflow: hidden; }

@@ -110,14 +110,15 @@ const ISSUES_TOOL = {
           type: 'object', additionalProperties: false,
           properties: {
             number: { type: 'integer' },
-            subject: { type: 'string', description: 'under 55 characters' },
+            subject: { type: 'string', description: 'subject line A, under 55 characters' },
+            subject_alt: { type: 'string', description: 'subject line B for an A/B test: a clearly different approach from A, under 55 characters' },
             preview_text: { type: 'string', description: 'under 90 characters' },
             headline: { type: 'string' },
             body: { type: 'string', description: 'the issue body in Markdown, 350 to 550 words' },
             cta: { type: 'string', description: 'click issues: the 2 to 5 word button label. reply issues: an empty string' },
             image_idea: { type: 'string', description: 'one sentence describing a fitting image' },
           },
-          required: ['number', 'subject', 'preview_text', 'headline', 'body', 'cta', 'image_idea'],
+          required: ['number', 'subject', 'subject_alt', 'preview_text', 'headline', 'body', 'cta', 'image_idea'],
         },
       },
     },
@@ -160,7 +161,7 @@ Respond only with JSON that matches the requested schema.`;
 
 export async function planSeries(env, sub) {
   const labels = issueLabels(sub.settings);
-  if (env.MOCK_AI === '1') return mockPlan(sub, labels);
+  if (env.MOCK_AI === '1') { await mockWait(env); return mockPlan(sub, labels); }
   const prompt = `${describeInputs(sub)}
 
 Issue labels in order: ${labels.join(', ')}
@@ -180,7 +181,7 @@ Return the plan as JSON matching the schema. The issues array must have exactly 
 const WRITER_SYSTEM = `You are a senior newsletter writer at Twelve Issues. You write email newsletters people actually read.
 Rules:
 - Follow the series plan and voice exactly. Ground every claim in the brief or source excerpt. Never invent quotes, statistics, testimonials, prices, or credentials.
-- Each issue: a subject line under 55 characters that earns the open (no clickbait, no ALL CAPS), preview text under 90 characters, a headline, and a body of 350 to 550 words in Markdown.
+- Each issue: two subject lines under 55 characters that earn the open (no clickbait, no ALL CAPS). Subject A and subject B must take clearly different approaches so the author can A/B test them (for example curiosity vs. a concrete promise, or a question vs. a statement). Then preview text under 90 characters that works with either subject, a headline, and a body of 350 to 550 words in Markdown.
 - Body structure: a hook in the first two sentences, short paragraphs, one subheading or a short list where it helps, then the sign-off line from the plan, then the author's name. Vary the greeting from issue to issue, or skip it.
 - Exactly one call to action, following the plan's cta_type:
   - click: end the body with one sentence that points to the button below. Set cta to the plan's 2 to 5 word button label. Do not also ask the reader to reply.
@@ -192,7 +193,7 @@ Rules:
 Respond only with JSON that matches the requested schema.`;
 
 export async function writeBatch(env, sub, brief, numbers) {
-  if (env.MOCK_AI === '1') return mockIssues(sub, brief, numbers);
+  if (env.MOCK_AI === '1') { await mockWait(env); return mockIssues(sub, brief, numbers); }
   const plan = brief.issues.filter(i => numbers.includes(i.number));
   const prompt = `${describeInputs(sub)}
 
@@ -217,7 +218,8 @@ Return the finished issues as JSON matching the schema. Include exactly these is
   return { issues, model, usage };
 }
 
-// ----- Mock mode for local testing (MOCK_AI=1) -----
+// ----- Mock mode for local testing (MOCK_AI=1; MOCK_DELAY_MS slows each step to preview the progress screen) -----
+const mockWait = env => new Promise(r => setTimeout(r, Number(env.MOCK_DELAY_MS || 0)));
 function mockPlan(sub, labels) {
   return {
     model: 'mock',
@@ -239,6 +241,7 @@ function mockIssues(sub, brief, numbers) {
     issues: numbers.map(n => ({
       number: n,
       subject: `${brief.issues[n - 1].label}: a note about ${sub.title}`.slice(0, 55),
+      subject_alt: `Version B for issue ${n}`,
       preview_text: 'A short preview line for testing the layout.',
       headline: `Issue ${n}: ${brief.issues[n - 1].theme}`,
       body: `Here is a sample opening for issue ${n}.\n\n## Why it matters\n\nShort paragraphs keep readers moving. This mock text checks layout, copy buttons, and downloads.\n\n- One useful point\n- Another useful point\n\nTalk soon,\nThe team`,
