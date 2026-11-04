@@ -32,7 +32,13 @@ const TI = (() => {
   }
 
   async function requireLogin({ admin = false } = {}) {
-    const user = await loadMe();
+    // Only a clear "no session" answer sends someone to the login page; network or server hiccups retry
+    let user = null;
+    for (let attempt = 1; attempt <= 4; attempt++) {
+      try { user = (await api('auth/me')).user; break; }
+      catch (e) { if (attempt === 4) { user = null; break; } await new Promise(r => setTimeout(r, 700 * attempt)); }
+    }
+    me = user;
     if (!user) { location.href = '/login.html?next=' + encodeURIComponent(location.pathname + location.search); return new Promise(() => {}); }
     if (admin && user.role !== 'admin') { location.href = '/app/'; return new Promise(() => {}); }
     renderNav(user);

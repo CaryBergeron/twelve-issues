@@ -26,31 +26,97 @@ export function sampleText(text = '', maxChars) {
   return parts.join('\n\n[...]\n\n');
 }
 
-async function callClaude(env, { system, prompt, maxTokens }) {
+// Ask Claude to answer by calling a tool, so the result always arrives as valid structured data.
+// Retries once on a malformed or cut-off answer. Usage from every attempt is returned (or attached to the error).
+async function callClaudeTool(env, { system, prompt, maxTokens, tool }) {
   if (!env.ANTHROPIC_API_KEY) throw new HttpError(503, 'The writing engine is not set up yet.');
   const model = env.AI_MODEL || DEFAULT_MODEL;
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'x-api-key': env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-      'content-type': 'application/json',
-    },
-    body: JSON.stringify({ model, max_tokens: maxTokens, system, messages: [{ role: 'user', content: prompt }] }),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new HttpError(502, data?.error?.message || `Writing engine error (${res.status}).`);
-  const text = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-  return { text, model, usage: data.usage || {} };
+  const usage = { input_tokens: 0, output_tokens: 0 };
+  let lastProblem = '';
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json' },
+      body: JSON.stringify({
+        model, max_tokens: maxTokens, system,
+        tools: [tool], tool_choice: { type: 'tool', name: tool.name },
+        messages: [{ role: 'user', content: prompt }],
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    usage.input_tokens += data?.usage?.input_tokens || 0;
+    usage.output_tokens += data?.usage?.output_tokens || 0;
+    if (!res.ok) {
+      const err = new HttpError(502, data?.error?.message || `Writing engine error (${res.status}).`);
+      err.usage = usage; err.detail = { status: res.status, type: data?.error?.type };
+      if (res.status === 429 || res.status >= 500) { lastProblem = err.message; if (attempt < 2) { await new Promise(r => setTimeout(r, 4000)); continue; } }
+      throw err;
+    }
+    const block = (data.content || []).find(b => b.type === 'tool_use' && b.name === tool.name);
+    if (block && block.input && data.stop_reason !== 'max_tokens') return { input: block.input, model, usage };
+    lastProblem = data.stop_reason === 'max_tokens' ? 'answer ran past the length limit' : 'no structured answer returned';
+  }
+  const err = new HttpError(502, 'The writing engine returned an unreadable answer. Please try again.');
+  err.usage = usage; err.detail = { problem: lastProblem };
+  throw err;
 }
 
-function extractJson(text) {
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start < 0 || end < start) throw new HttpError(502, 'The writing engine returned an unreadable answer. Please try again.');
-  try { return JSON.parse(text.slice(start, end + 1)); }
-  catch { throw new HttpError(502, 'The writing engine returned an unreadable answer. Please try again.'); }
-}
+const PLAN_TOOL = {
+  name: 'save_plan',
+  description: 'Save the newsletter series brief and the 12-issue plan.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      summary: { type: 'string', description: '2 to 3 sentences on what this content is and who it serves' },
+      audience: { type: 'string', description: 'who the newsletter readers are and what they care about' },
+      voice: { type: 'string', description: 'how the newsletter should sound, with 3 short style rules' },
+      key_material: { type: 'array', items: { type: 'string' }, description: '15 to 25 specific facts, stories, examples, or short lines from the source worth using' },
+      issues: {
+        type: 'array', description: 'exactly 12 issues, numbered 1 to 12',
+        items: {
+          type: 'object',
+          properties: {
+            number: { type: 'integer' }, label: { type: 'string' },
+            format: { type: 'string', description: 'story, how-to, list, behind the scenes, spotlight, reader question, seasonal, etc.' },
+            theme: { type: 'string', description: 'short title' },
+            angle: { type: 'string', description: 'the one idea of this issue' },
+            notes: { type: 'string', description: 'specific details from the source to use' },
+            cta: { type: 'string', description: 'what the reader should do at the end' },
+          },
+          required: ['number', 'theme', 'angle', 'cta'],
+        },
+      },
+    },
+    required: ['summary', 'audience', 'voice', 'key_material', 'issues'],
+  },
+};
+
+const ISSUES_TOOL = {
+  name: 'save_issues',
+  description: 'Save the finished newsletter issues.',
+  input_schema: {
+    type: 'object',
+    properties: {
+      issues: {
+        type: 'array',
+        items: {
+          type: 'object',
+          properties: {
+            number: { type: 'integer' },
+            subject: { type: 'string', description: 'under 55 characters' },
+            preview_text: { type: 'string', description: 'under 90 characters' },
+            headline: { type: 'string' },
+            body: { type: 'string', description: 'the issue body in Markdown, 350 to 550 words' },
+            cta: { type: 'string', description: 'button or link text' },
+            image_idea: { type: 'string', description: 'one sentence describing a fitting image' },
+          },
+          required: ['number', 'subject', 'preview_text', 'headline', 'body', 'cta'],
+        },
+      },
+    },
+    required: ['issues'],
+  },
+};
 
 function describeInputs(sub) {
   const q = sub.questionnaire || {};
@@ -80,7 +146,7 @@ Rules:
 - For an author: build reader relationship and book sales without spoiling major plot twists. Follow the author's spoiler rule exactly, draw issue types from the content they said they are happy to share, steer calls to action toward their stated goals, and name only the stores they listed. For a business: be genuinely useful first and promotional second.
 - If issues are monthly, tie topics to the month or season where it fits naturally.
 - Plain language. No long dashes (use commas, colons, or periods instead).
-Respond with JSON only, no commentary.`;
+Respond only by calling the tool you are given.`;
 
 export async function planSeries(env, sub) {
   const labels = issueLabels(sub.settings);
@@ -94,20 +160,9 @@ SOURCE MATERIAL (${sub.source_chars} characters total${sub.source_chars > BRIEF_
 ${sampleText(sub.source_text || '(No document uploaded. Work from the customer answers above.)', BRIEF_SOURCE_CHARS)}
 </source>
 
-Return this JSON shape:
-{
-  "summary": "2 to 3 sentences on what this content is and who it serves",
-  "audience": "who the newsletter readers are and what they care about",
-  "voice": "how the newsletter should sound, with 3 short style rules",
-  "key_material": ["15 to 25 specific facts, stories, examples, or lines from the source worth using"],
-  "issues": [
-    {"number": 1, "label": "${labels[0]}", "format": "story | how-to | list | etc", "theme": "short title", "angle": "the one idea of this issue", "notes": "specific details from the source to use", "cta": "what the reader should do at the end"}
-  ]
-}
-The issues array must have exactly 12 items, numbered 1 to 12.`;
-  const { text, model, usage } = await callClaude(env, { system: EDITOR_SYSTEM, prompt, maxTokens: 8000 });
-  const brief = extractJson(text);
-  if (!Array.isArray(brief.issues) || brief.issues.length < 12) throw new HttpError(502, 'The plan came back incomplete. Please try again.');
+Save the plan with the save_plan tool. The issues array must have exactly 12 items, numbered 1 to 12, using the issue labels above in order.`;
+  const { input: brief, model, usage } = await callClaudeTool(env, { system: EDITOR_SYSTEM, prompt, maxTokens: 16000, tool: PLAN_TOOL });
+  if (!Array.isArray(brief.issues) || brief.issues.length < 12) { const e = new HttpError(502, 'The plan came back incomplete. Please try again.'); e.usage = usage; throw e; }
   brief.issues = brief.issues.slice(0, 12).map((it, i) => ({ ...it, number: i + 1, label: labels[i] }));
   return { brief, model, usage };
 }
@@ -119,7 +174,7 @@ Rules:
 - Body structure: a hook in the first two sentences, short paragraphs, one subheading or a short list where it helps, and a warm sign-off line. End with a single clear call to action that matches the plan.
 - Write in second person to the reader. Plain language, grade 7 to 8 reading level. No long dashes (use commas, colons, or periods instead). No emoji unless the voice calls for it.
 - Do not mention that this was planned as a series of 12 or written by AI.
-Respond with JSON only, no commentary.`;
+Respond only by calling the tool you are given.`;
 
 export async function writeBatch(env, sub, brief, numbers) {
   if (env.MOCK_AI === '1') return mockIssues(sub, brief, numbers);
@@ -140,13 +195,10 @@ SOURCE EXCERPT FOR GROUNDING:
 ${sampleText(sub.source_text || '(No document uploaded.)', WRITER_SOURCE_CHARS)}
 </source>
 
-Return JSON:
-{"issues": [{"number": n, "subject": "...", "preview_text": "...", "headline": "...", "body": "markdown", "cta": "button or link text", "image_idea": "one sentence describing a fitting image"}]}
-Include exactly these issue numbers: ${numbers.join(', ')}.`;
-  const { text, model, usage } = await callClaude(env, { system: WRITER_SYSTEM, prompt, maxTokens: 9000 });
-  const out = extractJson(text);
+Save the finished issues with the save_issues tool. Include exactly these issue numbers: ${numbers.join(', ')}.`;
+  const { input: out, model, usage } = await callClaudeTool(env, { system: WRITER_SYSTEM, prompt, maxTokens: 16000, tool: ISSUES_TOOL });
   const issues = (out.issues || []).filter(i => numbers.includes(Number(i.number)));
-  if (issues.length !== numbers.length) throw new HttpError(502, 'Some issues came back missing. Please try again.');
+  if (issues.length !== numbers.length) { const e = new HttpError(502, 'Some issues came back missing. Please try again.'); e.usage = usage; throw e; }
   return { issues, model, usage };
 }
 

@@ -345,8 +345,10 @@ on('POST', 'submissions/:id/generate', async ({ request, env, args }) => {
     return json({ status: done ? 'complete' : 'generating', progress: next });
   } catch (e) {
     const msg = e instanceof HttpError ? e.message : 'Something went wrong while writing. Please try again.';
-    await env.DB.prepare("UPDATE submissions SET status = 'failed', error = ?, locked_until = NULL, updated_at = ? WHERE id = ?").bind(msg, nowIso(), s.id).run();
-    await logEvent(env, 'generation_failed', { userId: s.user_id, submissionId: s.id, data: { step: s.progress, message: String(e.message || e).slice(0, 500) } });
+    const u = e.usage || {};
+    await env.DB.prepare("UPDATE submissions SET status = 'failed', error = ?, locked_until = NULL, input_tokens = input_tokens + ?, output_tokens = output_tokens + ?, updated_at = ? WHERE id = ?")
+      .bind(msg, u.input_tokens || 0, u.output_tokens || 0, nowIso(), s.id).run();
+    await logEvent(env, 'generation_failed', { userId: s.user_id, submissionId: s.id, data: { step: s.progress, message: String(e.message || e).slice(0, 500), detail: e.detail || null, tokens: u } });
     return error(msg, 502, { progress: s.progress });
   }
 });
