@@ -138,6 +138,8 @@ input:focus, select:focus, textarea:focus { border-color: var(--blue); outline: 
 .letter-body { padding: 26px 28px 30px; font-family: var(--read); font-size: 1.06rem; line-height: 1.75; }
 .letter-body h3 { font-size: 1.5rem; }
 
+.letter-body a { color: var(--blue); }
+.letter-body a.cta-line, .letter-body a.cta-line:hover { color: #fff; }
 .letter-body h4 { font-family: var(--read); font-size: 1.15rem; margin: 1.2rem 0 .4rem; }
 .letter-body ol, .letter-body ul { padding-left: 1.3em; }
 .letter-clip { max-height: 520px; overflow: hidden; position: relative; }
@@ -334,6 +336,13 @@ mark.fill { background: #f7e39c; color: var(--ink); padding: 0 .2em; border-radi
 .gl-body input { margin-top: 2px; accent-color: var(--ok); flex: none; }
 .gl-body input:checked + span { color: var(--ink-soft); text-decoration: line-through; }
 .gl-body .btn { width: 100%; background: #fff; }
+.gl-auto { cursor: default !important; }
+.gl-auto input:disabled { opacity: 1; }
+.btn-ready { background: var(--ok); border-color: var(--ok); color: #fff; }
+.btn-ready:hover { background: #17633e; border-color: #17633e; color: #fff; }
+.nav-ready { display: inline-block; margin-top: 3px; font-size: .7rem; font-weight: 700; color: var(--ok); }
+.nav-ready::before { content: "\2713 "; }
+.issue-nav button[aria-current="true"] .nav-ready { color: #8fd6ae; }
 .tips-modal { border: 0; border-radius: var(--r-md); padding: 28px; width: min(600px, 92vw); box-shadow: 0 30px 80px rgba(23,34,30,.35); color: var(--ink); }
 .tips-modal::backdrop { background: rgba(23,34,30,.55); }
 .tips-head { display: flex; gap: 14px; align-items: flex-start; }

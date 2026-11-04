@@ -116,7 +116,7 @@ const TI = (() => {
     f.innerHTML = `
       <div class="wrap foot-grid">
         <div class="foot-brand">
-          <a class="brand" href="/"><img src="/assets/logo-white.svg" alt="Twelve Issues" width="265" height="32"></a>
+          <a class="brand" href="/"><img src="/assets/logo-white.svg" alt="Twelve Issues" width="233" height="32"></a>
           <p>One upload. One year of newsletters. Reader emails written from your own book, $12 for all twelve.</p>
           <a class="btn btn-gold btn-sm" href="/signup.html">Write my 12 issues</a>
         </div>

@@ -59,6 +59,8 @@ CREATE TABLE IF NOT EXISTS submissions (
 CREATE INDEX IF NOT EXISTS idx_submissions_user ON submissions(user_id);
 CREATE INDEX IF NOT EXISTS idx_submissions_status ON submissions(status);
 
+-- Added Nov 2026: ALTER TABLE submissions ADD COLUMN checklist TEXT;  (JSON: {tips:{key:bool}, ready:[issue numbers]})
+
 CREATE TABLE IF NOT EXISTS issues (
   id TEXT PRIMARY KEY,
   submission_id TEXT NOT NULL REFERENCES submissions(id) ON DELETE CASCADE,

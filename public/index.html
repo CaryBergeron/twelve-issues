@@ -14,7 +14,7 @@
 </head>
 <body>
 <header class="top"><div class="wrap top-in">
-  <a class="brand" href="/"><img src="/assets/logo.svg" alt="Twelve Issues" width="224" height="27"></a>
+  <a class="brand" href="/"><img src="/assets/logo.svg" alt="Twelve Issues" width="196" height="27"></a>
   <nav class="nav" id="nav"><a href="#how" class="hide-sm">How it works</a><a href="#pricing" class="hide-sm">Pricing</a><a href="/contact.html" class="hide-sm">Contact</a><a href="/login.html">Log in</a><a class="btn btn-sm" href="/signup.html">Get started</a></nav>
 </div></header>
 
@@ -74,7 +74,7 @@
     <div class="wrap">
       <div class="sample-head">
         <h2>Real letters, not filler</h2>
-        <p class="muted">Four months from <em>Devil&rsquo;s Dawn</em>, a small-town Alaska thriller by Charlotte Raine. Exactly what Twelve Issues wrote from the manuscript, unedited. Click through the year.</p>
+        <p class="muted">Four months from <em>Devil&rsquo;s Dawn</em>, a small-town Alaska thriller by Charlotte Raine. Exactly what Twelve Issues wrote from the manuscript, with her real Amazon links. Click through the year.</p>
       </div>
       <div class="sample-tabs" role="tablist" aria-label="Sample months" id="sample-tabs"></div>
       <div class="sample">
@@ -212,7 +212,7 @@
     document.getElementById('sample-kind').innerHTML = `<span class="kind-pill ${x.cta ? 'click' : 'reply'}">${TI.esc(x.type)}</span> ${TI.esc(x.month)}: ${TI.esc(x.format)}`;
     document.getElementById('sample-notes').innerHTML = x.notes.map(([a, b]) => `<li><strong>${TI.esc(a)}:</strong> ${TI.esc(b)}</li>`).join('');
     document.getElementById('sample-meta').innerHTML = `<div><dt>Subject A</dt><dd>${TI.esc(x.subject)}</dd></div><div><dt>Subject B</dt><dd>${TI.esc(x.subject_alt)}</dd></div><div><dt>Preview</dt><dd>${TI.esc(x.preview)}</dd></div>`;
-    body.innerHTML = `<h3>${TI.esc(x.headline)}</h3>${TI.md(x.body).replace(/<h3>/g, '<h4>').replace(/<\/h3>/g, '</h4>')}${x.cta ? `<p><span class="cta-line">${TI.esc(x.cta)}</span></p>` : '<p class="reply-note">No button this month: readers reply to this email.</p>'}`;
+    body.innerHTML = `<h3>${TI.esc(x.headline)}</h3>${TI.md(x.body).replace(/<h3>/g, '<h4>').replace(/<\/h3>/g, '</h4>')}${x.cta ? `<p><a class="cta-line" href="${TI.esc(x.url || '#')}" target="_blank" rel="noopener">${TI.esc(x.cta)}</a></p>` : '<p class="reply-note">No button this month: readers reply to this email.</p>'}`;
     body.classList.remove('letter-open'); body.scrollTop = 0;
     more.setAttribute('aria-expanded', 'false'); more.textContent = 'Read the whole email';
   }

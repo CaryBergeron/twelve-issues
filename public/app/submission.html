@@ -11,7 +11,7 @@
 </head>
 <body>
 <header class="top"><div class="wrap top-in">
-  <a class="brand" href="/"><img src="/assets/logo.svg" alt="Twelve Issues" width="224" height="27"></a>
+  <a class="brand" href="/"><img src="/assets/logo.svg" alt="Twelve Issues" width="196" height="27"></a>
   <nav class="nav" id="nav"></nav>
 </div></header>
 <main class="page"><div class="wrap">
@@ -241,16 +241,46 @@ function buildTips() {
   return tips;
 }
 function tipsText() {
-  return `Before going live with your 12 issues of ${sub.title}:\n\n` + buildTips().map((x, i) => `[ ] ${i + 1}. ${x.t}`).join('\n');
+  return `Before going live with your 12 issues of ${sub.title}:\n\n[ ] 1. Read every issue and mark each one ready.\n` + buildTips().map((x, i) => `[ ] ${i + 2}. ${x.t}`).join('\n');
 }
 const CHECK_KEY = () => 'ti_check_' + id;
-function loadChecks() { try { return JSON.parse(localStorage.getItem(CHECK_KEY()) || '{}'); } catch { return {}; } }
-function saveChecks(c) { try { localStorage.setItem(CHECK_KEY(), JSON.stringify(c)); } catch {} }
+let cl = null; // { tips: {key: bool}, ready: [issue numbers] }
+function loadChecklist() {
+  if (cl) return cl;
+  let local = null;
+  try { local = JSON.parse(localStorage.getItem(CHECK_KEY()) || 'null'); } catch {}
+  if (local && !local.tips) local = { tips: local, ready: [] }; // older format stored just the ticks
+  cl = sub.checklist || local || { tips: {}, ready: [] };
+  cl.tips = cl.tips || {}; cl.ready = cl.ready || [];
+  return cl;
+}
+let saveTimer = null;
+function saveChecklist() {
+  try { localStorage.setItem(CHECK_KEY(), JSON.stringify(cl)); } catch {}
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => TI.api(`submissions/${id}/checklist`, { method: 'PUT', body: cl }).catch(() => {}), 400);
+}
+const isReady = n => loadChecklist().ready.includes(n);
+function toggleReady(n) {
+  const c = loadChecklist();
+  c.ready = isReady(n) ? c.ready.filter(x => x !== n) : [...c.ready, n].sort((a, b) => a - b);
+  saveChecklist();
+  renderNavReady(); renderTips(); show(n);
+}
+function renderNavReady() {
+  TI.$$('#issue-nav button').forEach(b => {
+    const n = Number(b.dataset.n);
+    b.querySelector('.nav-ready')?.remove();
+    if (isReady(n)) b.insertAdjacentHTML('beforeend', '<span class="nav-ready">Ready</span>');
+  });
+}
 let checklistOpen = false;
 
 function renderTips() {
-  const tips = buildTips();
-  const checks = loadChecks();
+  const c = loadChecklist();
+  const readyCount = c.ready.length;
+  const tips = [{ k: 'reviewed', auto: true, t: `Read every issue and click Mark ready on each one (${readyCount} of ${issues.length} ready).` }, ...buildTips()];
+  const checks = { ...c.tips, reviewed: readyCount >= issues.length };
   const done = tips.filter(x => checks[x.k]).length;
   const pct = Math.round((done / tips.length) * 100);
   const complete = done === tips.length;
@@ -263,19 +293,18 @@ function renderTips() {
         <span class="gl-more">${checklistOpen ? 'Hide checklist' : 'View checklist'}</span>
       </button>
       <div class="gl-body" id="gl-body" ${checklistOpen ? '' : 'hidden'}>
-        <ul>${tips.map(x => `<li><label><input type="checkbox" data-k="${x.k}" ${checks[x.k] ? 'checked' : ''}><span>${TI.esc(x.t)}</span></label></li>`).join('')}</ul>
+        <ul>${tips.map(x => `<li><label${x.auto ? ' class="gl-auto" title="Ticks itself when all 12 issues are marked ready"' : ''}><input type="checkbox" data-k="${x.k}" ${checks[x.k] ? 'checked' : ''} ${x.auto ? 'disabled' : ''}><span>${TI.esc(x.t)}</span></label></li>`).join('')}</ul>
         <button type="button" class="btn btn-sm btn-ghost" id="note-copy">Copy checklist</button>
       </div>
     </div>`;
   TI.$('#gl-toggle').addEventListener('click', () => { checklistOpen = !checklistOpen; renderTips(); });
-  TI.$$('#gl-body input[type=checkbox]').forEach(cb => cb.addEventListener('change', () => {
-    const c = loadChecks(); c[cb.dataset.k] = cb.checked; saveChecks(c);
-    const nowDone = tips.every(x => c[x.k]);
-    if (nowDone) TI.track('checklist_complete');
+  TI.$$('#gl-body input[type=checkbox]:not([disabled])').forEach(cb => cb.addEventListener('change', () => {
+    const c = loadChecklist(); c.tips[cb.dataset.k] = cb.checked; saveChecklist();
+    if (tips.every(x => x.k === 'reviewed' ? c.ready.length >= issues.length : c.tips[x.k])) TI.track('checklist_complete');
     renderTips();
   }));
   TI.$('#note-copy').addEventListener('click', e => TI.copy(tipsText(), e.currentTarget));
-  TI.$('#tips-list').innerHTML = tips.map(x => `<li>${TI.esc(x.t)}</li>`).join('');
+  TI.$('#tips-list').innerHTML = tips.map(x => `<li>${TI.esc(x.k === 'reviewed' ? 'Read every issue and click Mark ready on each one.' : x.t)}</li>`).join('');
   let seen = false;
   try { seen = localStorage.getItem('ti_tips_' + id) === '1'; } catch {}
   const dlg = TI.$('#tips-modal');
@@ -290,6 +319,7 @@ function renderDone() {
   TI.$('#issue-nav').innerHTML = issues.map(i => `<button type="button" data-n="${i.number}"><b>${TI.esc(i.month_label || 'Issue ' + i.number)}</b>${TI.esc(i.subject)}</button>`).join('');
   TI.$$('#issue-nav button').forEach(b => { const it = issues.find(x => x.number === Number(b.dataset.n)); if (it && /\[[^\]]+\](?!\()/.test(it.body)) b.insertAdjacentHTML('beforeend', '<span class="nav-fill">Needs your details</span>'); b.addEventListener('click', () => show(Number(b.dataset.n))); });
   show(current);
+  renderNavReady();
   renderTips();
   rating = sub.rating || 0; renderStars();
   TI.$('#fb').value = sub.feedback || '';
@@ -306,6 +336,7 @@ function show(n) {
   const link = sub.settings.cta_url;
   TI.$('#issue').innerHTML = `
     <div class="issue-tools">
+      <button class="btn btn-sm ${isReady(i.number) ? 'btn-ready' : 'btn-ghost'}" id="mark-ready" aria-pressed="${isReady(i.number)}">${isReady(i.number) ? '&#10003; Ready' : 'Mark ready'}</button>
       <button class="btn btn-sm btn-gold" id="edit">Edit issue</button>
       <button class="btn btn-sm" data-copy="all">Copy issue</button>
       <button class="btn btn-sm btn-ghost" data-copy="subject">Copy subject A</button>
@@ -327,6 +358,7 @@ function show(n) {
     TI.copy(k === 'subject' ? i.subject : k === 'subject_alt' ? i.subject_alt : k === 'html' ? emailHtml(i) : plain(i), b);
   }));
   TI.$('#edit').addEventListener('click', () => edit(i));
+  TI.$('#mark-ready').addEventListener('click', () => toggleReady(i.number));
 }
 
 // ----- editing -----

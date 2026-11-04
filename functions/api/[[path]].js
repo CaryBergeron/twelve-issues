@@ -186,6 +186,7 @@ function publicSubmission(s) {
     questionnaire: safeParse(s.questionnaire, {}), settings: safeParse(s.settings, {}),
     plan: (safeParse(s.brief, null)?.issues || []).map(i => ({ number: i.number, label: i.label, theme: i.theme, angle: i.angle })),
     rating: s.rating, feedback: s.feedback,
+    checklist: safeParse(s.checklist, null),
     created_at: s.created_at, completed_at: s.completed_at,
   };
 }
@@ -371,6 +372,21 @@ on('POST', 'submissions/:id/generate', async ({ request, env, ctx, args }) => {
   })();
   if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(work);
   return new Response(readable, { status: 200, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
+});
+
+// Go-live checklist and per-issue "ready" marks, saved to the account so they follow the author across devices
+on('PUT', 'submissions/:id/checklist', async ({ request, env, args }) => {
+  const user = await requireUser(env, request);
+  const s = await ownedSubmission(env, user, args.id);
+  const b = await readJson(request, 10_000);
+  const tips = {};
+  for (const [k, v] of Object.entries(b.tips || {})) if (/^[a-z_]{1,20}$/.test(k)) tips[k] = !!v;
+  const ready = [...new Set((Array.isArray(b.ready) ? b.ready : []).map(Number).filter(n => n >= 1 && n <= 12))].sort((a, c) => a - c);
+  const value = JSON.stringify({ tips, ready });
+  try {
+    await env.DB.prepare('UPDATE submissions SET checklist = ?, updated_at = ? WHERE id = ?').bind(value, nowIso(), s.id).run();
+  } catch (e) { return json({ ok: false, stored: false }); } // column not added yet: the browser keeps a local copy
+  return json({ ok: true, stored: true });
 });
 
 on('POST', 'submissions/:id/feedback', async ({ request, env, args }) => {
