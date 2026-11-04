@@ -158,7 +158,7 @@ function renderDone() {
 }
 
 function plain(i) {
-  return `Subject: ${i.subject}\nPreview: ${i.preview_text}\n\n${i.headline}\n\n${i.body}\n\n${i.cta}${sub.settings.cta_url ? ': ' + sub.settings.cta_url : ''}`;
+  return `Subject: ${i.subject}\nPreview: ${i.preview_text}\n\n${i.headline}\n\n${i.body}${i.cta ? `\n\n${i.cta}${sub.settings.cta_url ? ': ' + sub.settings.cta_url : ''}` : ''}`;
 }
 
 function show(n) {
@@ -179,7 +179,7 @@ function show(n) {
       <div><dt>Preview</dt><dd>${TI.esc(i.preview_text)}</dd></div>
     </dl>
     <div class="prose"><h2>${TI.esc(i.headline)}</h2>${TI.md(i.body)}
-      <p>${link ? `<a class="cta-line" href="${TI.esc(link)}" target="_blank" rel="noopener">${TI.esc(i.cta)}</a>` : `<span class="cta-line">${TI.esc(i.cta)}</span>`}</p></div>
+      ${i.cta ? `<p>${link ? `<a class="cta-line" href="${TI.esc(link)}" target="_blank" rel="noopener">${TI.esc(i.cta)}</a>` : `<span class="cta-line">${TI.esc(i.cta)}</span>`}</p>` : ''}</div>
     ${i.image_idea ? `<p class="small muted" style="margin-top:1.4rem"><strong>Image idea:</strong> ${TI.esc(i.image_idea)}</p>` : ''}`;
   TI.$$('[data-copy]').forEach(b => b.addEventListener('click', () => {
     const k = b.dataset.copy;
@@ -201,7 +201,7 @@ function edit(i) {
     ${f('headline', 'Headline', i.headline, 200)}
     <div class="field"><label for="e_body">Body <span class="hint">Plain text. Leave a blank line between paragraphs. **bold**, *italic*, and lines starting with - make a list.</span></label>
       <textarea id="e_body" maxlength="12000" rows="18" style="font-family:var(--read);font-size:1.05rem;line-height:1.6">${TI.esc(i.body)}</textarea></div>
-    ${f('cta', 'Button text', i.cta, 120)}
+    ${f('cta', 'Button text', i.cta, 80, 'Leave empty for an issue that asks readers to reply instead')}
     <div class="wiz-nav"><button class="btn btn-ghost" id="e_cancel">Cancel</button><button class="btn" id="e_save">Save changes</button></div>`;
   TI.$('#e_subject').focus();
   TI.$('#e_cancel').addEventListener('click', () => show(i.number));
@@ -224,23 +224,23 @@ function edit(i) {
 function emailHtml(i) {
   const link = sub.settings.cta_url;
   const body = TI.md(i.body)
-    .replace(/<p>/g, '<p style="margin:0 0 16px;font-size:17px;line-height:1.6;color:#1b1f3b">')
-    .replace(/<h(\d)>/g, '<h$1 style="font-size:20px;margin:22px 0 10px;color:#1b1f3b">')
-    .replace(/<(ul|ol)>/g, '<$1 style="margin:0 0 16px;padding-left:22px;font-size:17px;line-height:1.6;color:#1b1f3b">');
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f6fa"><tr><td align="center" style="padding:24px 12px">
+    .replace(/<p>/g, '<p style="margin:0 0 16px;font-size:17px;line-height:1.6;color:#17221e">')
+    .replace(/<h(\d)>/g, '<h$1 style="font-size:20px;margin:22px 0 10px;color:#17221e">')
+    .replace(/<(ul|ol)>/g, '<$1 style="margin:0 0 16px;padding-left:22px;font-size:17px;line-height:1.6;color:#17221e">');
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#eef2ec"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;background:#ffffff;font-family:Georgia,serif"><tr><td style="padding:32px 34px">
-<h1 style="font-size:28px;line-height:1.2;margin:0 0 18px;color:#1b1f3b">${TI.esc(i.headline)}</h1>
+<h1 style="font-size:28px;line-height:1.2;margin:0 0 18px;color:#17221e">${TI.esc(i.headline)}</h1>
 ${body}
-${link ? `<p style="margin:24px 0 0"><a href="${TI.esc(link)}" style="display:inline-block;background:#d2283c;color:#ffffff;font-family:Arial,sans-serif;font-weight:bold;text-decoration:none;padding:13px 22px;border-radius:6px">${TI.esc(i.cta)}</a></p>` : `<p style="margin:24px 0 0;font-weight:bold">${TI.esc(i.cta)}</p>`}
+${!i.cta ? '' : link ? `<p style="margin:24px 0 0"><a href="${TI.esc(link)}" style="display:inline-block;background:#1f4d3f;color:#ffffff;font-family:Arial,sans-serif;font-weight:bold;text-decoration:none;padding:13px 22px;border-radius:6px">${TI.esc(i.cta)}</a></p>` : `<p style="margin:24px 0 0;font-weight:bold">${TI.esc(i.cta)}</p>`}
 </td></tr></table></td></tr></table>`;
 }
 
 const slug = () => sub.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 50) || 'twelve-issues';
 TI.$('#dl-md').addEventListener('click', () => TI.download(`${slug()}-12-issues.md`,
-  `# ${sub.title}: 12 newsletters\n\n` + issues.map(i => `---\n\n## Issue ${i.number}${i.month_label ? ' (' + i.month_label + ')' : ''}\n\n**Subject:** ${i.subject}  \n**Preview:** ${i.preview_text}\n\n### ${i.headline}\n\n${i.body}\n\n**Call to action:** ${i.cta}${sub.settings.cta_url ? ' (' + sub.settings.cta_url + ')' : ''}\n\n*Image idea: ${i.image_idea || ''}*\n`).join('\n'), 'text/markdown'));
+  `# ${sub.title}: 12 newsletters\n\n` + issues.map(i => `---\n\n## Issue ${i.number}${i.month_label ? ' (' + i.month_label + ')' : ''}\n\n**Subject:** ${i.subject}  \n**Preview:** ${i.preview_text}\n\n### ${i.headline}\n\n${i.body}\n\n${i.cta ? `**Button:** ${i.cta}${sub.settings.cta_url ? ' (' + sub.settings.cta_url + ')' : ''}\n\n` : ''}*Image idea: ${i.image_idea || ''}*\n`).join('\n'), 'text/markdown'));
 TI.$('#dl-html').addEventListener('click', () => TI.download(`${slug()}-12-issues.html`,
-  `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${TI.esc(sub.title)}: 12 newsletters</title></head><body style="margin:0;background:#f4f6fa">` +
-  issues.map(i => `<div style="font-family:Arial,sans-serif;padding:24px 24px 0;color:#4a5072"><strong>Issue ${i.number}${i.month_label ? ', ' + TI.esc(i.month_label) : ''}</strong><br>Subject: ${TI.esc(i.subject)}<br>Preview: ${TI.esc(i.preview_text)}</div>` + emailHtml(i)).join('<hr style="border:0;border-top:2px dashed #d5dce8;margin:24px 0">') + '</body></html>', 'text/html'));
+  `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${TI.esc(sub.title)}: 12 newsletters</title></head><body style="margin:0;background:#eef2ec">` +
+  issues.map(i => `<div style="font-family:Arial,sans-serif;padding:24px 24px 0;color:#4b5751"><strong>Issue ${i.number}${i.month_label ? ', ' + TI.esc(i.month_label) : ''}</strong><br>Subject: ${TI.esc(i.subject)}<br>Preview: ${TI.esc(i.preview_text)}</div>` + emailHtml(i)).join('<hr style="border:0;border-top:2px dashed #d6ddd6;margin:24px 0">') + '</body></html>', 'text/html'));
 TI.$('#dl-csv').addEventListener('click', () => {
   const esc = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
   const rows = [['issue', 'month', 'subject', 'preview_text', 'headline', 'body', 'call_to_action', 'image_idea'], ...issues.map(i => [i.number, i.month_label, i.subject, i.preview_text, i.headline, i.body, i.cta, i.image_idea])];

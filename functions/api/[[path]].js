@@ -336,7 +336,7 @@ on('POST', 'submissions/:id/generate', async ({ request, env, ctx, args }) => {
     const stmts = issues.map(it => env.DB.prepare(
       `INSERT INTO issues (id, submission_id, number, month_label, subject, preview_text, headline, body, cta, image_idea) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
        ON CONFLICT(submission_id, number) DO UPDATE SET subject = excluded.subject, preview_text = excluded.preview_text, headline = excluded.headline, body = excluded.body, cta = excluded.cta, image_idea = excluded.image_idea`)
-      .bind(uid('i_'), s.id, Number(it.number), brief.issues[it.number - 1]?.label || null, str(it.subject, 200), str(it.preview_text, 300), str(it.headline, 300), String(it.body || '').slice(0, 20_000), str(it.cta, 300), str(it.image_idea, 500)));
+      .bind(uid('i_'), s.id, Number(it.number), brief.issues[it.number - 1]?.label || null, str(it.subject, 200), str(it.preview_text, 300), str(it.headline, 300), String(it.body || '').slice(0, 20_000), str(it.cta, 80), str(it.image_idea, 500)));
     const next = s.progress + 1;
     const done = next >= 4;
     stmts.push(env.DB.prepare(`UPDATE submissions SET progress = ?, status = ?, completed_at = ?, model = ?, input_tokens = input_tokens + ?, output_tokens = output_tokens + ?, locked_until = NULL, updated_at = ? WHERE id = ?`)
