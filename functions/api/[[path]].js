@@ -577,9 +577,9 @@ on('GET', 'admin/health', async ({ request, env }) => {
   // Stripe secret key
   const sk = env.STRIPE_SECRET_KEY || '';
   if (!sk) add('Stripe secret key', false, 'Not set', 'Add STRIPE_SECRET_KEY in Cloudflare, then redeploy');
-  else if (!/^sk_(test|live)_/.test(sk)) add('Stripe secret key', false, `Starts with "${sk.slice(0, 8)}", expected sk_test_ or sk_live_`, 'Use the Secret key, not the publishable (pk_) or restricted (rk_) key');
+  else if (!/^(sk|rk)_(test|live)_/.test(sk)) add('Stripe secret key', false, `Starts with "${sk.slice(0, 8)}", expected sk_ or rk_ (test or live)`, 'Use the Secret key, not the publishable (pk_) or restricted (rk_) key');
   else {
-    const mode = sk.startsWith('sk_live_') ? 'live' : 'test (sandbox)';
+    const mode = /^(sk|rk)_live_/.test(sk) ? 'live' : 'test (sandbox)';
     try {
       const r = await fetch('https://api.stripe.com/v1/balance', { headers: { authorization: `Bearer ${sk}` } });
       add('Stripe secret key', r.ok, r.ok ? `Valid, ${mode} mode` : `Stripe rejected it (HTTP ${r.status})`, r.ok ? '' : 'Re-copy the secret key from Stripe');
