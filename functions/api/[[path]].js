@@ -41,6 +41,15 @@ function match(route) {
 function appUrl(env, request) {
   return (env.APP_URL || new URL(request.url).origin).replace(/\/$/, '');
 }
+// Throttle using the events log: how many matching events in the last N minutes
+async function recentCount(env, type, field, value, minutes) {
+  if (!value) return 0;
+  const r = await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM events WHERE type = ? AND created_at > datetime('now', ?) AND json_extract(data, '$.' || ?) = ?`)
+    .bind(type, `-${minutes} minutes`, field, value).first();
+  return r ? r.n : 0;
+}
+const ipOf = request => request.headers.get('cf-connecting-ip') || '';
 function isSecure(request) { return new URL(request.url).protocol === 'https:'; }
 
 // ---------- public config ----------
@@ -67,6 +76,7 @@ on('POST', 'auth/signup', async ({ request, env }) => {
   const password = String(b.password || '');
   if (!EMAIL_RE.test(email)) return error('Please enter a valid email address.');
   if (password.length < 8) return error('Passwords need at least 8 characters.');
+  if (await recentCount(env, 'signup', 'ip', ipOf(request), 60) >= 10) return error('Too many new accounts from this connection. Please try again in an hour.', 429);
   const exists = await env.DB.prepare('SELECT id FROM users WHERE email = ?').bind(email).first();
   if (exists) return error('That email already has an account. Try logging in.', 409);
   const { hash, salt } = await hashPassword(password);
@@ -75,15 +85,20 @@ on('POST', 'auth/signup', async ({ request, env }) => {
   await env.DB.prepare('INSERT INTO users (id, email, name, company, password_hash, password_salt, role, signup_source) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
     .bind(id, email, str(b.name, 120), str(b.company, 160), hash, salt, role, str(b.source, 300)).run();
   const s = await createSession(env, id);
-  await logEvent(env, 'signup', { userId: id, data: { source: str(b.source, 300) } });
+  await logEvent(env, 'signup', { userId: id, data: { source: str(b.source, 300), ip: ipOf(request) } });
   return json({ user: { id, email, name: str(b.name, 120), role } }, 201, { 'set-cookie': cookie(SESSION_COOKIE, s.token, { maxAge: s.maxAge, secure: isSecure(request) }) });
 });
 
 on('POST', 'auth/login', async ({ request, env }) => {
   const b = await readJson(request, 10_000);
   const email = str(b.email, 200).toLowerCase();
+  const ip = ipOf(request);
+  if (await recentCount(env, 'login_failed', 'email', email, 15) >= 8 || await recentCount(env, 'login_failed', 'ip', ip, 15) >= 30) {
+    return error('Too many tries. Please wait 15 minutes, or reset your password.', 429);
+  }
   const user = await env.DB.prepare('SELECT * FROM users WHERE email = ?').bind(email).first();
   if (!user || !(await verifyPassword(String(b.password || ''), user.password_hash, user.password_salt))) {
+    await logEvent(env, 'login_failed', { userId: user?.id, data: { email, ip } });
     return error('That email and password do not match.', 401);
   }
   await env.DB.prepare('UPDATE users SET last_login_at = ? WHERE id = ?').bind(nowIso(), user.id).run();
@@ -140,7 +155,7 @@ on('POST', 'auth/forgot', async ({ request, env }) => {
   const b = await readJson(request, 5_000);
   const email = str(b.email, 200).toLowerCase();
   const user = await env.DB.prepare('SELECT id, email FROM users WHERE email = ?').bind(email).first();
-  if (user && env.RESEND_API_KEY) {
+  if (user && env.RESEND_API_KEY && await recentCount(env, 'password_reset_requested', 'email', email, 60) < 5) {
     const token = randomToken(24);
     await env.DB.prepare('INSERT INTO password_resets (token_hash, user_id, expires_at) VALUES (?, ?, ?)')
       .bind(await sha256(token), user.id, nowIso(3600_000)).run();
@@ -155,7 +170,7 @@ on('POST', 'auth/forgot', async ({ request, env }) => {
         text: `Click this link to choose a new password. It works for one hour.\n\n${link}\n\nIf you did not ask for this, you can ignore this email.`,
       }),
     });
-    await logEvent(env, 'password_reset_requested', { userId: user.id });
+    await logEvent(env, 'password_reset_requested', { userId: user.id, data: { email } });
   }
   // Same answer either way so nobody can test which emails have accounts
   return json({ ok: true, email_enabled: !!env.RESEND_API_KEY });
@@ -315,6 +330,11 @@ on('POST', 'submissions/:id/generate', async ({ request, env, ctx, args }) => {
   let s = await ownedSubmission(env, user, args.id);
   if (s.status === 'awaiting_payment') return error('Please complete payment first.', 402);
   if (s.status === 'complete') return json({ status: 'complete', progress: 4 });
+  // Cap retries so one project can't loop on Claude forever (an admin "Rewrite from scratch" resets the count)
+  const fails = await env.DB.prepare(
+    `SELECT COUNT(*) AS n FROM events WHERE submission_id = ? AND type = 'generation_failed'
+     AND id > COALESCE((SELECT MAX(id) FROM events WHERE submission_id = ? AND type = 'submission_reset'), 0)`).bind(s.id, s.id).first();
+  if (fails && fails.n >= 6) return error('This project hit a snag a few times, so we paused it. Email hello@twelveissues.com and we will finish it for you.', 429);
 
   const lock = await env.DB.prepare("UPDATE submissions SET locked_until = ?, status = 'generating', error = NULL, updated_at = ? WHERE id = ? AND (locked_until IS NULL OR locked_until < ?)")
     .bind(nowIso(9 * 60_000), nowIso(), s.id, nowIso()).run();
