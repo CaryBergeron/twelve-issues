@@ -118,6 +118,12 @@ const TI = (() => {
         <div class="foot-brand">
           <a class="brand" href="/"><img src="/assets/logo-white.svg" alt="Twelve Issues" width="233" height="32"></a>
           <p>One upload. One year of newsletters. Reader emails written from your own book, $12 for all twelve.</p>
+          <ol class="stack-mini" aria-label="Sample subject lines">
+            <li class="book b0" style="--x:10px;--r:4px"><b>January</b><span>The first line I ever wrote</span></li>
+            <li class="book b3" style="--x:0px;--r:16px"><b>April</b><span>A scene from his side</span></li>
+            <li class="book b1" style="--x:18px;--r:0px"><b>July</b><span>A summer list for readers</span></li>
+            <li class="book b2" style="--x:6px;--r:10px"><b>October</b><span>The chapter I cut</span></li>
+          </ol>
           <a class="btn btn-gold btn-sm" href="/signup.html">Write my 12 issues</a>
         </div>
         <nav class="foot-col" aria-label="Product">
