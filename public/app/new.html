@@ -7,7 +7,7 @@
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/site.css?v=202611061448">
 <script src="/assets/extract.js"></script>
 </head>
 <body>
@@ -74,7 +74,7 @@
     <div class="wiz-nav"><button class="btn btn-ghost" data-back>Back</button><span></span></div>
   </section>
 </div></main>
-<script src="/assets/app.js"></script>
+<script src="/assets/app.js?v=202611061448"></script>
 <script>
 // Author questions are tap-to-answer. type: one (pick one), many (pick any), text, area
 const Q = {
@@ -238,7 +238,7 @@ TI.$('#pay').addEventListener('click', async e => {
     const { id } = await TI.api('submissions', { method: 'POST', body });
     btn.textContent = 'Opening secure checkout...';
     const r = await TI.api(`submissions/${id}/checkout`, { method: 'POST' });
-    if (r.event_id) await TI.pixel('InitiateCheckout', { value: r.value, currency: 'USD' }, r.event_id);
+    if (r.event_id && TI.pixel) await TI.pixel('InitiateCheckout', { value: r.value, currency: 'USD' }, r.event_id);
     location.href = r.url || `/app/submission.html?id=${id}`;
   } catch (err) {
     TI.showError(TI.$('#msg'), err.message);

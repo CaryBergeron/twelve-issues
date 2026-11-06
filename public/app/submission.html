@@ -7,7 +7,7 @@
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Text:ital,wght@0,400;0,700;1,400&family=Libre+Franklin:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/assets/site.css">
+<link rel="stylesheet" href="/assets/site.css?v=202611061448">
 </head>
 <body>
 <header class="top"><div class="wrap top-in">
@@ -84,7 +84,7 @@
   </div>
   <p class="small muted" style="margin:.8rem 0 0">This checklist stays in the sidebar. Tick items off as you go and watch it reach 100%.</p>
 </dialog>
-<script src="/assets/app.js"></script>
+<script src="/assets/app.js?v=202611061448"></script>
 <script>
 const id = new URLSearchParams(location.search).get('id');
 const params = new URLSearchParams(location.search);
@@ -111,7 +111,7 @@ async function confirmPayment(sessionId) {
   for (let i = 0; i < 6; i++) {
     try {
       const r = await TI.api(`submissions/${id}/confirm`, { method: 'POST', body: { session_id: sessionId } });
-      if (r.paid) { if (r.event_id) TI.pixel('Purchase', { value: r.value, currency: 'USD' }, r.event_id); break; }
+      if (r.paid) { if (r.event_id && TI.pixel) TI.pixel('Purchase', { value: r.value, currency: 'USD' }, r.event_id); break; }
     } catch {}
     await new Promise(r => setTimeout(r, 1500));
   }
@@ -210,7 +210,7 @@ TI.$('#pay').addEventListener('click', async e => {
   const btn = e.currentTarget; btn.disabled = true;
   try {
     const r = await TI.api(`submissions/${id}/checkout`, { method: 'POST' });
-    if (r.event_id) await TI.pixel('InitiateCheckout', { value: r.value, currency: 'USD' }, r.event_id);
+    if (r.event_id && TI.pixel) await TI.pixel('InitiateCheckout', { value: r.value, currency: 'USD' }, r.event_id);
     if (r.url) location.href = r.url; else await load();
   }
   catch (err) { TI.showError(TI.$('#msg'), err.message); }
