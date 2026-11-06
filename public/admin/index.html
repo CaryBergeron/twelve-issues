@@ -14,34 +14,52 @@
   <a class="brand" href="/"><img src="/assets/logo.svg" alt="Twelve Issues" width="196" height="27"></a>
   <nav class="nav" id="nav"></nav>
 </div></header>
-<main class="page"><div class="wrap">
-  <div class="page-head"><h1>Admin</h1><span class="small muted" id="updated"></span></div>
+<main class="page"><div class="wrap admin-shell">
+  <aside class="admin-side">
+    <nav aria-label="Admin sections" id="admin-nav">
+      <p class="side-group">Overview</p>
+      <a href="#dashboard" data-tab="dashboard"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>Dashboard</a>
+      <p class="side-group">Customers</p>
+      <a href="#projects" data-tab="projects"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></svg>Projects<span class="badge" id="b-projects" hidden></span></a>
+      <a href="#users" data-tab="users"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/></svg>Users</a>
+      <a href="#messages" data-tab="messages"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6.5 8.5 6.5 8.5-6.5"/></svg>Messages</a>
+      <p class="side-group">Money</p>
+      <a href="#costs" data-tab="costs"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18"/><path d="M16.5 7.5c0-1.7-2-3-4.5-3s-4.5 1.3-4.5 3S9.5 10.5 12 11s4.5 1.3 4.5 3.5-2 3.5-4.5 3.5-4.5-1.3-4.5-3"/></svg>Costs</a>
+      <p class="side-group">System</p>
+      <a href="#setup" data-tab="setup"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.5c0 4.5 3.2 8.2 7.5 9.5 4.3-1.3 7.5-5 7.5-9.5V6z"/><path d="m8.5 12 2.5 2.5 4.5-5"/></svg>Setup check<span class="badge badge-bad" id="b-setup" hidden></span></a>
+      <a href="#activity" data-tab="activity"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12h4l3-8 4 16 3-8h4"/></svg>Activity log</a>
+      <a href="#exports" data-tab="exports"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 19h16"/></svg>Exports</a>
+    </nav>
+  </aside>
+  <div class="admin-main">
+  <div class="page-head"><h1 id="section-title">Dashboard</h1><span class="small muted" id="updated"></span></div>
   <div id="msg" hidden></div>
-  <section class="panel health" id="health">
-    <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
-      <h3 style="margin:0">Setup check</h3>
-      <button class="btn btn-sm btn-ghost" id="health-run">Check again</button>
+  <section data-panel="dashboard">
+    <a class="status-strip" id="status-strip" href="#setup"><span class="dot" aria-hidden="true"></span><span id="status-text">Checking setup...</span><span class="status-tags" id="status-tags"></span><span class="status-go">Details</span></a>
+    <section class="panel money" id="money">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap">
+        <h3 style="margin:0">Money</h3>
+        <span class="small muted" id="money-note"></span>
+      </div>
+      <div class="money-row" id="money-cards"></div>
+      <p class="small muted" id="money-detail" style="margin:.8rem 0 0"></p>
+    </section>
+    <div class="stats" id="stats"></div>
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem">
+      <h3 style="margin:0 0 .6rem">Latest projects</h3><a class="small" href="#projects">See all projects</a>
     </div>
-    <ul class="health-list" id="health-list"><li class="muted">Checking keys...</li></ul>
+    <div class="table-wrap"><table class="data" id="t-recent"></table></div>
   </section>
-  <section class="panel money" id="money">
-    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap">
-      <h3 style="margin:0">Money</h3>
-      <span class="small muted" id="money-note"></span>
+  <section data-panel="setup" hidden>
+    <div class="panel health" id="health">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:1rem;flex-wrap:wrap">
+        <p class="muted" style="margin:0">Keys, payments, AI model and email, checked live.</p>
+        <button class="btn btn-sm btn-ghost" id="health-run">Check again</button>
+      </div>
+      <ul class="health-list" id="health-list"><li class="muted">Checking keys...</li></ul>
     </div>
-    <div class="money-row" id="money-cards"></div>
-    <p class="small muted" id="money-detail" style="margin:.8rem 0 0"></p>
   </section>
-  <div class="stats" id="stats"></div>
-  <div class="tabs" role="tablist">
-    <button role="tab" aria-selected="true" data-tab="projects">Projects</button>
-    <button role="tab" aria-selected="false" data-tab="users">Users</button>
-    <button role="tab" aria-selected="false" data-tab="messages">Messages</button>
-    <button role="tab" aria-selected="false" data-tab="activity">Activity</button>
-    <button role="tab" aria-selected="false" data-tab="costs">Costs</button>
-    <button role="tab" aria-selected="false" data-tab="exports">Exports</button>
-  </div>
-  <section data-panel="projects">
+  <section data-panel="projects" hidden>
     <div style="display:flex;gap:.6rem;align-items:center;margin-bottom:.8rem;flex-wrap:wrap">
       <label for="filter" style="margin:0">Status</label>
       <select id="filter" style="width:auto"><option value="">All</option><option value="awaiting_payment">Waiting for payment</option><option value="paid">Ready to write</option><option value="generating">Writing</option><option value="complete">Ready</option><option value="failed">Needs a retry</option></select>
@@ -78,6 +96,7 @@
       </div>
     </div>
   </section>
+  </div>
 </div></main>
 <div class="scrim" id="scrim" hidden></div>
 <aside class="drawer" id="drawer" aria-label="Project details"></aside>
@@ -86,14 +105,8 @@
 let projects = [];
 (async () => {
   await TI.requireLogin({ admin: true });
-  TI.$$('.tabs button').forEach(b => b.addEventListener('click', () => {
-    TI.$$('.tabs button').forEach(x => x.setAttribute('aria-selected', String(x === b)));
-    TI.$$('[data-panel]').forEach(p => (p.hidden = p.dataset.panel !== b.dataset.tab));
-    if (b.dataset.tab === 'users') loadUsers();
-    if (b.dataset.tab === 'activity') loadEvents();
-    if (b.dataset.tab === 'messages') loadMessages();
-    if (b.dataset.tab === 'costs') loadFinance();
-  }));
+  window.addEventListener('hashchange', () => showSection(location.hash.slice(1)));
+  showSection(location.hash.slice(1));
   TI.$('#filter').addEventListener('change', loadProjects);
   TI.$('#scrim').addEventListener('click', closeDrawer);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
@@ -101,9 +114,33 @@ let projects = [];
   TI.$('#x-date').value = new Date().toISOString().slice(0, 10);
   TI.$('#exp-form').addEventListener('submit', addExpense);
   await Promise.all([loadHealth(), loadFinance(), loadStats(), loadProjects()]);
+  renderRecent();
 })();
 
 const n = v => Number(v || 0).toLocaleString();
+const SECTIONS = { dashboard: 'Dashboard', projects: 'Projects', users: 'Users', messages: 'Messages', costs: 'Costs', setup: 'Setup check', activity: 'Activity log', exports: 'Exports' };
+function showSection(key) {
+  if (!SECTIONS[key]) key = 'dashboard';
+  TI.$$('#admin-nav a').forEach(a => a.toggleAttribute('aria-current', a.dataset.tab === key));
+  TI.$$('[data-panel]').forEach(p => (p.hidden = p.dataset.panel !== key));
+  TI.$('#section-title').textContent = SECTIONS[key];
+  document.title = SECTIONS[key] + ' | Admin | Twelve Issues';
+  if (key === 'users') loadUsers();
+  if (key === 'activity') loadEvents();
+  if (key === 'messages') loadMessages();
+  if (key === 'costs' || key === 'dashboard') loadFinance();
+}
+function renderRecent() {
+  const rows = projects.slice(0, 5);
+  TI.$('#t-recent').innerHTML = `<thead><tr><th>Created</th><th>Customer</th><th>Project</th><th>Status</th><th>Paid</th></tr></thead><tbody>` +
+    (rows.length ? rows.map(s => `<tr class="click" tabindex="0" data-id="${s.id}"><td>${TI.datetime(s.created_at)}</td><td>${TI.esc(s.email)}</td><td>${TI.esc(s.title)}</td>
+      <td><span class="pill pill-${s.status}">${TI.STATUS[s.status] || s.status}</span></td><td>${s.comped ? 'Comped' : s.paid_at ? TI.money(s.price_cents) : ''}</td></tr>`).join('')
+      : '<tr><td colspan="5" class="muted">No projects yet.</td></tr>') + '</tbody>';
+  TI.$$('#t-recent tr.click').forEach(r => {
+    r.addEventListener('click', () => openDrawer(r.dataset.id));
+    r.addEventListener('keydown', e => { if (e.key === 'Enter') openDrawer(r.dataset.id); });
+  });
+}
 async function loadHealth() {
   const ul = TI.$('#health-list');
   ul.innerHTML = '<li class="muted">Checking keys...</li>';
@@ -111,7 +148,15 @@ async function loadHealth() {
     const { checks } = await TI.api('admin/health');
     ul.innerHTML = checks.map(c => `<li class="${c.ok ? 'ok' : c.optional ? 'opt' : 'bad'}"><span class="mark" aria-hidden="true">${c.ok ? '&#10003;' : c.optional ? '&ndash;' : '&#10007;'}</span>
       <span><strong>${TI.esc(c.name)}</strong> <span class="muted">${TI.esc(c.detail)}</span>${!c.ok && c.fix ? `<br><span class="small">${TI.esc(c.fix)}</span>` : ''}</span></li>`).join('');
-  } catch (e) { ul.innerHTML = `<li class="bad">${TI.esc(e.message)}</li>`; }
+    const bad = checks.filter(c => !c.ok && !c.optional).length;
+    const opt = checks.filter(c => !c.ok && c.optional).length;
+    const key = checks.find(c => c.name === 'Stripe secret key');
+    const live = key && /live/.test(key.detail || '');
+    TI.$('#status-strip').className = 'status-strip ' + (bad ? 'bad' : 'ok');
+    TI.$('#status-text').textContent = bad ? `${bad} setup ${bad === 1 ? 'item needs' : 'items need'} attention` : 'All required checks passing';
+    TI.$('#status-tags').innerHTML = (key && key.ok ? `<span class="tag ${live ? 'tag-live' : 'tag-test'}">${live ? 'Live payments' : 'Test payments'}</span>` : '') + (opt ? `<span class="tag">${opt} optional</span>` : '');
+    const b = TI.$('#b-setup'); b.hidden = !bad; b.textContent = bad;
+  } catch (e) { ul.innerHTML = `<li class="bad">${TI.esc(e.message)}</li>`; TI.$('#status-strip').className = 'status-strip bad'; TI.$('#status-text').textContent = 'Setup check could not run'; }
 }
 
 async function loadFinance() {
@@ -158,6 +203,7 @@ async function loadStats() {
       ['Completed', n(s.complete), s.failed ? `${n(s.failed)} need a retry` : 'No failures'],
       ['Avg rating', s.avg_rating ?? 'None yet', s.ratings ? `${n(s.ratings)} ratings` : ''],
     ];
+    const bp = TI.$('#b-projects'); bp.hidden = !s.failed; bp.textContent = s.failed || '';
     TI.$('#stats').innerHTML = cards.map(([a, b, c]) => `<div class="stat"><span>${a}</span><strong>${TI.esc(b)}</strong>${c ? `<span class="small">${TI.esc(c)}</span>` : ''}</div>`).join('');
     TI.$('#updated').textContent = 'Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
   } catch (err) { TI.showError(TI.$('#msg'), err.message); }

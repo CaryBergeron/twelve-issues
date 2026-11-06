@@ -437,3 +437,36 @@ table.data tr.click:hover td { background: var(--tint); }
   .list a.item .item-date { display: none; }
   .hero { padding: 40px 0 52px; }
 }
+
+/* Admin shell: sidebar nav + main */
+.admin-shell { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 32px; align-items: start; }
+.admin-side { position: sticky; top: 84px; }
+.admin-side nav { display: grid; gap: 2px; }
+.side-group { margin: 14px 0 4px 12px; font: 700 .68rem/1 var(--ui); letter-spacing: .1em; text-transform: uppercase; color: var(--ink-soft); }
+.side-group:first-child { margin-top: 0; }
+.admin-side a { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 8px; font: 600 .94rem/1.2 var(--ui); color: var(--ink-soft); text-decoration: none; min-height: 40px; box-sizing: border-box; }
+.admin-side a:hover { background: var(--envelope); color: var(--ink); }
+.admin-side a[aria-current] { background: var(--blue); color: #fff; }
+.admin-side svg { width: 18px; height: 18px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.admin-side .badge { margin-left: auto; min-width: 20px; padding: 2px 6px; border-radius: 999px; background: var(--gold); color: var(--ink); font-size: .74rem; text-align: center; box-sizing: border-box; }
+.admin-side .badge-bad { background: var(--red); color: #fff; }
+.admin-main .page-head { margin-bottom: 1.2rem; }
+/* Compact setup status */
+.status-strip { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 14px; margin-bottom: 1rem; border: 1px solid var(--rule); border-radius: var(--r-md); background: #fff; color: var(--ink); text-decoration: none; font: 600 .92rem/1.3 var(--ui); }
+.status-strip:hover { border-color: var(--ink-soft); }
+.status-strip .dot { width: 10px; height: 10px; border-radius: 50%; background: #9aa79f; flex: none; }
+.status-strip.ok .dot { background: var(--ok); }
+.status-strip.bad { background: #f8eaec; border-color: #ecc5cb; }
+.status-strip.bad .dot { background: var(--red); }
+.status-tags { display: flex; gap: 6px; }
+.status-tags .tag { font: 600 .74rem/1 var(--ui); padding: 4px 8px; border-radius: 999px; background: var(--envelope); color: var(--ink-soft); }
+.status-tags .tag-live { background: #e7f5ee; color: var(--ok); }
+.status-tags .tag-test { background: #fbf1d6; color: #7a5a00; }
+.status-go { margin-left: auto; font-size: .84rem; color: var(--blue); }
+@media (max-width: 860px) {
+  .admin-shell { grid-template-columns: 1fr; gap: 12px; }
+  .admin-side { position: static; min-width: 0; overflow-x: auto; }
+  .admin-side nav { display: flex; gap: 4px; padding: 0 0 8px; width: max-content; }
+  .side-group { display: none; }
+  .admin-side a { white-space: nowrap; }
+}
