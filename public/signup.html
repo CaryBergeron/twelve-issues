@@ -38,8 +38,9 @@ TI.$('#f').addEventListener('submit', async e => {
   e.preventDefault();
   const btn = e.submitter; btn.disabled = true;
   try {
-    await TI.api('auth/signup', { method: 'POST', body: {
+    const r = await TI.api('auth/signup', { method: 'POST', body: {
       name: TI.$('#name').value, company: TI.$('#company').value, email: TI.$('#email').value, password: TI.$('#password').value, source } });
+    await TI.pixel('CompleteRegistration', {}, r.user && 'reg_' + r.user.id);
     location.href = '/app/new.html';
   } catch (err) { TI.showError(TI.$('#msg'), err.message); btn.disabled = false; }
 });

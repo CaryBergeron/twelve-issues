@@ -103,6 +103,33 @@ const TI = (() => {
     if (btn) { const old = btn.textContent; btn.textContent = 'Copied'; setTimeout(() => (btn.textContent = old), 1400); }
   }
 
+  // Meta Pixel: loads only when META_PIXEL_ID is set in Cloudflare, never on admin pages
+  async function initPixel() {
+    if (location.pathname.startsWith('/admin')) return false;
+    let id = null;
+    try { id = sessionStorage.getItem('ti_px'); } catch {}
+    if (id === null) {
+      try { id = (await api('config')).meta_pixel_id || ''; } catch { id = ''; }
+      try { sessionStorage.setItem('ti_px', id); } catch {}
+    }
+    if (!id) return false;
+    !function (f, b, e, v, n, t, s) { if (f.fbq) return; n = f.fbq = function () { n.callMethod ? n.callMethod.apply(n, arguments) : n.queue.push(arguments); };
+      if (!f._fbq) f._fbq = n; n.push = n; n.loaded = !0; n.version = '2.0'; n.queue = []; t = b.createElement(e); t.async = !0; t.src = v;
+      s = b.getElementsByTagName(e)[0]; s.parentNode.insertBefore(t, s); }(window, document, 'script', 'https://connect.facebook.net/en_US/fbevents.js');
+    window.fbq('init', id);
+    window.fbq('track', 'PageView');
+    return true;
+  }
+  const pixelReady = initPixel();
+  // Fire a standard event; eventId matches the server's copy so Meta counts it once
+  async function pixel(event, params = {}, eventId) {
+    try {
+      if (!(await pixelReady) || !window.fbq) return;
+      window.fbq('track', event, params, eventId ? { eventID: eventId } : undefined);
+      await new Promise(r => setTimeout(r, 350)); // give the request a moment before a page change
+    } catch {}
+  }
+
   function track(type) {
     try { navigator.sendBeacon?.('/api/events', new Blob([JSON.stringify({ type, page: location.pathname, ref: document.referrer })], { type: 'application/json' })); } catch {}
   }
@@ -156,5 +183,5 @@ const TI = (() => {
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', renderFooter); else renderFooter();
 
-  return { api, esc, $, $$, money, date, datetime, STATUS, loadMe, requireLogin, renderNav, showError, showOk, md, download, copy, track };
+  return { api, esc, $, $$, money, date, datetime, STATUS, loadMe, requireLogin, renderNav, showError, showOk, md, download, copy, track, pixel };
 })();

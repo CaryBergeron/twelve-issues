@@ -109,7 +109,10 @@ async function load() {
 
 async function confirmPayment(sessionId) {
   for (let i = 0; i < 6; i++) {
-    try { const r = await TI.api(`submissions/${id}/confirm`, { method: 'POST', body: { session_id: sessionId } }); if (r.paid) break; } catch {}
+    try {
+      const r = await TI.api(`submissions/${id}/confirm`, { method: 'POST', body: { session_id: sessionId } });
+      if (r.paid) { if (r.event_id) TI.pixel('Purchase', { value: r.value, currency: 'USD' }, r.event_id); break; }
+    } catch {}
     await new Promise(r => setTimeout(r, 1500));
   }
   history.replaceState(null, '', `/app/submission.html?id=${id}`);
@@ -205,7 +208,11 @@ async function run() {
 TI.$('#retry').addEventListener('click', () => { sub.status = 'generating'; TI.$('#msg').hidden = true; render(); });
 TI.$('#pay').addEventListener('click', async e => {
   const btn = e.currentTarget; btn.disabled = true;
-  try { const r = await TI.api(`submissions/${id}/checkout`, { method: 'POST' }); if (r.url) location.href = r.url; else await load(); }
+  try {
+    const r = await TI.api(`submissions/${id}/checkout`, { method: 'POST' });
+    if (r.event_id) await TI.pixel('InitiateCheckout', { value: r.value, currency: 'USD' }, r.event_id);
+    if (r.url) location.href = r.url; else await load();
+  }
   catch (err) { TI.showError(TI.$('#msg'), err.message); }
   btn.disabled = false;
 });

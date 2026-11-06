@@ -238,6 +238,7 @@ TI.$('#pay').addEventListener('click', async e => {
     const { id } = await TI.api('submissions', { method: 'POST', body });
     btn.textContent = 'Opening secure checkout...';
     const r = await TI.api(`submissions/${id}/checkout`, { method: 'POST' });
+    if (r.event_id) await TI.pixel('InitiateCheckout', { value: r.value, currency: 'USD' }, r.event_id);
     location.href = r.url || `/app/submission.html?id=${id}`;
   } catch (err) {
     TI.showError(TI.$('#msg'), err.message);

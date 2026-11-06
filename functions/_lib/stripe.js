@@ -29,12 +29,12 @@ async function stripe(env, method, path, body) {
   return data;
 }
 
-export function createCheckoutSession(env, { submission, user, appUrl }) {
+export function createCheckoutSession(env, { submission, user, appUrl, extra = {} }) {
   return stripe(env, 'POST', '/checkout/sessions', {
     mode: 'payment',
     customer_email: user.email,
     client_reference_id: submission.id,
-    metadata: { submission_id: submission.id, user_id: user.id },
+    metadata: { submission_id: submission.id, user_id: user.id, ...Object.fromEntries(Object.entries(extra).filter(([, v]) => v).map(([k, v]) => [k, String(v).slice(0, 490)])) },
     payment_intent_data: { metadata: { submission_id: submission.id } },
     allow_promotion_codes: 'true',
     line_items: [{

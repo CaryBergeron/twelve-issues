@@ -1,5 +1,5 @@
 // Twelve Issues API: one router for every /api/* route
-import { json, error, HttpError, uid, nowIso, readJson, cookie, str, safeParse, logEvent, csv, randomToken, sha256 } from '../_lib/util.js';
+import { json, error, HttpError, uid, nowIso, readJson, cookie, str, safeParse, logEvent, csv, randomToken, sha256, getCookie } from '../_lib/util.js';
 import { hashPassword, verifyPassword, createSession, destroySession, currentUser, requireUser, requireAdmin, isAdminEmail, SESSION_COOKIE } from '../_lib/auth.js';
 import { createCheckoutSession, retrieveCheckoutSession, verifyWebhook } from '../_lib/stripe.js';
 import { planSeries, writeBatch, BATCHES } from '../_lib/ai.js';
@@ -50,6 +50,33 @@ async function recentCount(env, type, field, value, minutes) {
   return r ? r.n : 0;
 }
 const ipOf = request => request.headers.get('cf-connecting-ip') || '';
+
+// ---------- Meta Pixel + Conversions API ----------
+// The browser pixel and these server events share an event_id, so Meta counts each conversion once.
+const visitor = request => ({
+  ip: ipOf(request), ua: (request.headers.get('user-agent') || '').slice(0, 400),
+  fbp: (getCookie(request, '_fbp') || '').slice(0, 200), fbc: (getCookie(request, '_fbc') || '').slice(0, 300),
+});
+async function capi(env, { name, eventId, email, userId, v = {}, url, value }) {
+  if (!env.META_PIXEL_ID || !env.META_CAPI_TOKEN) return;
+  const user_data = {};
+  if (v.ip) user_data.client_ip_address = v.ip;
+  if (v.ua) user_data.client_user_agent = v.ua;
+  if (v.fbp) user_data.fbp = v.fbp;
+  if (v.fbc) user_data.fbc = v.fbc;
+  if (email) user_data.em = [await sha256(String(email).trim().toLowerCase())];
+  if (userId) user_data.external_id = [await sha256(String(userId))];
+  const ev = { event_name: name, event_time: Math.floor(Date.now() / 1000), event_id: eventId, action_source: 'website', event_source_url: url, user_data };
+  if (value != null) ev.custom_data = { currency: 'USD', value: Number(value), content_name: 'Twelve Issues' };
+  const body = { data: [ev] };
+  if (env.META_TEST_EVENT_CODE) body.test_event_code = env.META_TEST_EVENT_CODE;
+  try {
+    const r = await fetch(`https://graph.facebook.com/${env.META_GRAPH_VERSION || 'v25.0'}/${env.META_PIXEL_ID}/events?access_token=${encodeURIComponent(env.META_CAPI_TOKEN)}`,
+      { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+    if (!r.ok) await logEvent(env, 'capi_error', { data: { name, status: r.status, body: (await r.text()).slice(0, 300) } });
+  } catch (e) { await logEvent(env, 'capi_error', { data: { name, message: String(e.message || e).slice(0, 200) } }); }
+}
+const later = (ctx, p) => { if (ctx && typeof ctx.waitUntil === 'function') ctx.waitUntil(p); else return p; };
 function isSecure(request) { return new URL(request.url).protocol === 'https:'; }
 
 // ---------- public config ----------
@@ -58,6 +85,7 @@ on('GET', 'config', async ({ env }) => json({
   payments_ready: !!env.STRIPE_SECRET_KEY || env.MOCK_PAYMENTS === '1',
   mock_payments: env.MOCK_PAYMENTS === '1',
   password_reset_email: !!env.RESEND_API_KEY,
+  meta_pixel_id: /^\d{6,20}$/.test(env.META_PIXEL_ID || '') ? env.META_PIXEL_ID : '',
 }));
 
 on('POST', 'events', async ({ request, env }) => {
@@ -70,7 +98,7 @@ on('POST', 'events', async ({ request, env }) => {
 });
 
 // ---------- auth ----------
-on('POST', 'auth/signup', async ({ request, env }) => {
+on('POST', 'auth/signup', async ({ request, env, ctx }) => {
   const b = await readJson(request, 20_000);
   const email = str(b.email, 200).toLowerCase();
   const password = String(b.password || '');
@@ -86,6 +114,7 @@ on('POST', 'auth/signup', async ({ request, env }) => {
     .bind(id, email, str(b.name, 120), str(b.company, 160), hash, salt, role, str(b.source, 300)).run();
   const s = await createSession(env, id);
   await logEvent(env, 'signup', { userId: id, data: { source: str(b.source, 300), ip: ipOf(request) } });
+  later(ctx, capi(env, { name: 'CompleteRegistration', eventId: 'reg_' + id, email, userId: id, v: visitor(request), url: appUrl(env, request) + '/signup.html' }));
   return json({ user: { id, email, name: str(b.name, 120), role } }, 201, { 'set-cookie': cookie(SESSION_COOKIE, s.token, { maxAge: s.maxAge, secure: isSecure(request) }) });
 });
 
@@ -283,7 +312,7 @@ on('PUT', 'submissions/:id/issues/:n', async ({ request, env, args }) => {
   return json({ ok: true, changed });
 });
 
-on('POST', 'submissions/:id/checkout', async ({ request, env, args }) => {
+on('POST', 'submissions/:id/checkout', async ({ request, env, ctx, args }) => {
   const user = await requireUser(env, request);
   const s = await ownedSubmission(env, user, args.id);
   if (s.status !== 'awaiting_payment') return json({ already_paid: true });
@@ -292,35 +321,45 @@ on('POST', 'submissions/:id/checkout', async ({ request, env, args }) => {
     return json({ already_paid: true, mock: true });
   }
   // Return to the exact address the customer is on, so their login cookie comes back with them
-  const session = await createCheckoutSession(env, { submission: s, user, appUrl: new URL(request.url).origin });
+  const v = visitor(request);
+  const session = await createCheckoutSession(env, { submission: s, user, appUrl: new URL(request.url).origin, extra: { v_ip: v.ip, v_ua: v.ua, v_fbp: v.fbp, v_fbc: v.fbc } });
   await env.DB.prepare('UPDATE submissions SET stripe_session_id = ?, updated_at = ? WHERE id = ?').bind(session.id, nowIso(), s.id).run();
   await logEvent(env, 'checkout_started', { userId: user.id, submissionId: s.id });
-  return json({ url: session.url });
+  const eventId = 'ic_' + session.id;
+  later(ctx, capi(env, { name: 'InitiateCheckout', eventId, email: user.email, userId: user.id, v, url: appUrl(env, request) + '/app/new.html', value: s.price_cents / 100 }));
+  return json({ url: session.url, event_id: eventId, value: s.price_cents / 100 });
 });
 
 // Called when Stripe sends the customer back, in case the webhook is slower than the redirect
 on('POST', 'submissions/:id/confirm', async ({ request, env, args }) => {
   const user = await requireUser(env, request);
   const s = await ownedSubmission(env, user, args.id);
-  if (s.status !== 'awaiting_payment') return json({ paid: true });
+  const paidAnswer = { paid: true, event_id: 'pur_' + s.id, value: s.price_cents / 100 };
+  if (s.status !== 'awaiting_payment') return json(s.comped ? { paid: true } : paidAnswer);
   const b = await readJson(request, 2_000);
   const sessionId = str(b.session_id, 200) || s.stripe_session_id;
   if (!sessionId) return json({ paid: false });
   const session = await retrieveCheckoutSession(env, sessionId);
   if (session.payment_status === 'paid' && session.metadata?.submission_id === s.id) {
-    await markPaid(env, s, { sessionId: session.id, intent: session.payment_intent, amount: session.amount_total, status: 'paid' });
-    return json({ paid: true });
+    await markPaid(env, s, { sessionId: session.id, intent: session.payment_intent, amount: session.amount_total, status: 'paid', session, url: appUrl(env, request) });
+    return json({ ...paidAnswer, value: (session.amount_total ?? s.price_cents) / 100 });
   }
   return json({ paid: false });
 });
 
-async function markPaid(env, s, { sessionId, intent = null, amount, status }) {
+async function markPaid(env, s, { sessionId, intent = null, amount, status, session = null, url = 'https://twelveissues.com' }) {
   const res = await env.DB.prepare("UPDATE submissions SET status = 'paid', paid_at = ?, comped = ?, stripe_session_id = COALESCE(?, stripe_session_id), updated_at = ? WHERE id = ? AND status = 'awaiting_payment'")
     .bind(nowIso(), status === 'comped' ? 1 : 0, sessionId, nowIso(), s.id).run();
   if (res.meta.changes) {
     await env.DB.prepare('INSERT OR IGNORE INTO payments (id, submission_id, user_id, stripe_session_id, stripe_payment_intent, amount_cents, status) VALUES (?, ?, ?, ?, ?, ?, ?)')
       .bind(uid('p_'), s.id, s.user_id, sessionId, intent, amount ?? 0, status).run();
     await logEvent(env, status === 'comped' ? 'submission_comped' : 'payment_received', { userId: s.user_id, submissionId: s.id, data: { amount } });
+    if (status === 'paid' && (amount ?? 0) > 0) {
+      const u = await env.DB.prepare('SELECT email FROM users WHERE id = ?').bind(s.user_id).first();
+      const md = session?.metadata || {};
+      await capi(env, { name: 'Purchase', eventId: 'pur_' + s.id, email: u?.email || session?.customer_email, userId: s.user_id,
+        v: { ip: md.v_ip, ua: md.v_ua, fbp: md.v_fbp, fbc: md.v_fbc }, url: `${url}/app/submission.html`, value: amount / 100 });
+    }
   }
 }
 
@@ -428,7 +467,7 @@ on('POST', 'stripe/webhook', async ({ request, env }) => {
     const id = session.metadata?.submission_id || session.client_reference_id;
     if (id && session.payment_status === 'paid') {
       const s = await env.DB.prepare('SELECT * FROM submissions WHERE id = ?').bind(id).first();
-      if (s) await markPaid(env, s, { sessionId: session.id, intent: session.payment_intent, amount: session.amount_total, status: 'paid' });
+      if (s) await markPaid(env, s, { sessionId: session.id, intent: session.payment_intent, amount: session.amount_total, status: 'paid', session, url: appUrl(env, request) });
     }
   }
   if (event.type === 'charge.refunded') {
@@ -639,6 +678,12 @@ on('GET', 'admin/health', async ({ request, env }) => {
     } catch (e) { add('Anthropic API key', false, 'Could not reach Anthropic', 'Try again in a minute'); }
   }
 
+  {
+    const pid = env.META_PIXEL_ID || '', tok = !!env.META_CAPI_TOKEN;
+    const okId = /^\d{6,20}$/.test(pid);
+    add('Meta Pixel', okId && tok, !pid ? 'Optional, not set yet' : !okId ? `META_PIXEL_ID should be digits only` : tok ? `Pixel ${pid} on site, server events on${env.META_TEST_EVENT_CODE ? ' (TEST MODE: remove META_TEST_EVENT_CODE when done)' : ''}` : `Pixel ${pid} on site; add META_CAPI_TOKEN for server events`,
+      'Add META_PIXEL_ID and META_CAPI_TOKEN (Events Manager, Settings, Conversions API)', !pid);
+  }
   add('Password reset and contact emails', !!env.RESEND_API_KEY, env.RESEND_API_KEY ? 'Resend key set' : 'Optional, not set yet', 'Add RESEND_API_KEY later', true);
   add('Test modes off', env.MOCK_AI !== '1' && env.MOCK_PAYMENTS !== '1', env.MOCK_AI === '1' || env.MOCK_PAYMENTS === '1' ? 'MOCK_AI or MOCK_PAYMENTS is on' : 'Real payments and real writing', 'Remove MOCK_ variables from Cloudflare');
   return json({ checks, checked_at: nowIso() });
