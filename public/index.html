@@ -185,13 +185,14 @@
   };
   const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
   const OFFSETS = [6, 22, 0, 14, 30, 4, 18, 10, 26, 2, 16, 8];
+  const RIGHTS = [10, 0, 18, 6, 2, 22, 8, 14, 0, 20, 4, 12];
   const stack = document.getElementById('stack');
   function show(key, animate) {
     const set = SETS[key];
     document.getElementById('stack-title').textContent = set.title;
     stack.classList.remove('restack');
     stack.innerHTML = set.months.map((s, i) =>
-      `<li class="book b${i % 6}" style="--i:${i};--x:${OFFSETS[i]}px"><b>${MONTHS[i]}</b><span>${TI.esc(s)}</span></li>`).join('');
+      `<li class="book b${i % 6}" style="--i:${i};--x:${OFFSETS[i]}px;--r:${RIGHTS[i]}px"><b>${MONTHS[i]}</b><span>${TI.esc(s)}</span></li>`).join('');
     if (animate) { void stack.offsetWidth; stack.classList.add('restack'); }
     document.querySelectorAll('.toggle button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.set === key)));
   }
